@@ -1,0 +1,11 @@
+{
+    "priorityStockProductTypes": [
+        "Nt mini",
+        "Super Nt"
+    ],
+    "refreshEveryMinutes": 5,
+    "usersToNotify": [
+        "Foo#1234",
+        "Bar#5678"
+    ]
+}
