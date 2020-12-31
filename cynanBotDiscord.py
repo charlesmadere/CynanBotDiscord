@@ -1,7 +1,7 @@
 import discord
 
 import CynanBotCommon.utils as utils
-from CynanBotCommon.analogueStoreRepository import (AnalogueStoreProduct,
+from CynanBotCommon.analogueStoreRepository import (AnalogueStoreEntry,
                                                     AnalogueStoreRepository,
                                                     AnalogueStoreStock)
 
