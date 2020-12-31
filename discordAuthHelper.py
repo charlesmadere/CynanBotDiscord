@@ -10,6 +10,9 @@ class DiscordAuthHelper():
         self,
         discordAuthFile: str = 'discordAuthFile.json'
     ):
+        if not utils.isValidStr(discordAuthFile):
+            raise ValueError(f'discordAuthFile argument is malformed: \"{discordAuthFile}\"')
+
         self.__discordAuthFile = discordAuthFile
 
         if not os.path.exists(discordAuthFile):
