@@ -2,14 +2,16 @@ import os
 
 import discord
 
+from CynanBotCommon.analogueStoreRepository import AnalogueStoreRepository
+from cynanBotDiscord import CynanBotDiscord
 from discordAuthHelper import DiscordAuthHelper
 
-
+analogueStoreRepository = AnalogueStoreRepository()
 discordAuthHelper = DiscordAuthHelper()
-discordClient = discord.client()
 
-@discordClient.event
-async def on_ready():
-    print(f'{discordClient.user} has connected to Discord!')
+cynanBotDiscord = CynanBotDiscord(
+    analogueStoreRepository=analogueStoreRepository
+)
 
-discordClient.run(discordAuthHelper.getToken())
+print('Starting CynanBotDiscord...')
+cynanBotDiscord.run(discordAuthHelper.getToken())
