@@ -1,6 +1,8 @@
 import json
 import os
 
+import CynanBotCommon.utils as utils
+
 
 class DiscordAuthHelper():
 
@@ -22,7 +24,7 @@ class DiscordAuthHelper():
             raise ValueError(f'JSON contents of discord auth file \"{discordAuthFile}\" is empty')
 
         token = jsonContents.get('token')
-        if token is None or len(token) == 0 or token.isspace():
+        if not utils.isValidStr(token):
             raise ValueError(f'Discord auth file \"{discordAuthFile}\" has malformed token: \"{token}\"')
         self.__token = token
 
