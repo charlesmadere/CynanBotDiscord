@@ -31,7 +31,7 @@ class CynanBotDiscord(discord.Client):
 
     async def on_ready(self):
         print(f'{self.user} is ready!')
-        self.__refreshAnalogueStoreAndPingIfNecessary()
+        self.__refreshAnalogueStoreAndScheduleMore()
 
     def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self):
         storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
