@@ -42,10 +42,6 @@ class CynanBotDiscord(discord.Client):
         if not utils.hasItems(priorityStockProductTypes):
             return None
 
-        usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
-        if not utils.hasItems(usersToNotify):
-            return None
-
         priorityEntriesInStock = list()
         priorityProductTypesInStock = list()
         for storeEntry in storeEntries:
@@ -63,8 +59,10 @@ class CynanBotDiscord(discord.Client):
 
         text = f'{text}\n{self.__analogueStoreRepository.getStoreUrl()}'
 
-        for userToNotify in usersToNotify:
-            text = f'{text}\n@{userToNotify}'
+        usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
+        if utils.hasItems(usersToNotify):
+            for userToNotify in usersToNotify:
+                text = f'{text}\n@{userToNotify}'
 
         return text
 
