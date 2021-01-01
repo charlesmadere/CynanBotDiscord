@@ -26,16 +26,16 @@ class AnalogueSettingsHelper():
         jsonContents = self.__readJson()
         productTypeStrings = jsonContents['priorityStockProductTypes']
 
-        productTypes = set()
+        productTypes = list()
         for productTypeString in productTypeStrings:
             if productTypeString.lower() == 'mega sg':
-                productTypes.add(AnalogueProductType.MEGA_SG)
+                productTypes.append(AnalogueProductType.MEGA_SG)
             elif productTypeString.lower() == 'nt mini':
-                productTypes.add(AnalogueProductType.NT_MINI)
+                productTypes.append(AnalogueProductType.NT_MINI)
             elif productTypeString.lower() == 'pocket':
-                productTypes.add(AnalogueProductType.POCKET)
+                productTypes.append(AnalogueProductType.POCKET)
             elif productTypeString.lower() == 'super nt':
-                productTypes.add(AnalogueProductType.SUPER_NT)
+                productTypes.append(AnalogueProductType.SUPER_NT)
 
         return productTypes
 
