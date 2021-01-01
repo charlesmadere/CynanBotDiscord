@@ -33,7 +33,8 @@ class CynanBotDiscord(discord.Client):
 
     async def on_ready(self):
         print(f'{self.user} is ready!')
-        self.__refreshAnalogueStoreAndScheduleMore()
+        await self.__refreshAnalogueStoreAndScheduleMore()
+        self.__scheduler.run()
 
     def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self):
         storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
@@ -68,14 +69,16 @@ class CynanBotDiscord(discord.Client):
 
         return text
 
-    def __refreshAnalogueStoreAndScheduleMore(self):
-        messageText = self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText()
+    async def __refreshAnalogueStoreAndScheduleMore(self):
+        text = self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText()
         delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
 
-        if utils.isValidStr(messageText):
+        if utils.isValidStr(text):
             channelId = self.__analogueSettingsHelper.getChannelId()
+            print(f'Sending Analogue stock message to channel \"{channelId}\":\n{text}')
+
             channel = self.get_channel(channelId)
-            await channel.send(messageText)
+            await channel.send(text)
 
             # delay one day before next Analogue store refresh
             delaySeconds = 60 * 60 * 24
@@ -83,5 +86,5 @@ class CynanBotDiscord(discord.Client):
         self.__scheduler.enter(
             delay=delaySeconds,
             priority=1,
-            action=self.__refreshAnalogueStoreAndScheduleMore()
+            action=self.__refreshAnalogueStoreAndScheduleMore
         )
