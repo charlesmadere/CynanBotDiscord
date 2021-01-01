@@ -71,10 +71,11 @@ class CynanBotDiscord(discord.Client):
         delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
 
         if utils.isValidStr(messageText):
-            # TODO perform Discord message here
-            print(messageText)
+            channelId = self.__analogueSettingsHelper.getChannelId()
+            channel = self.get_channel(channelId)
+            await channel.send(messageText)
 
-            # delay one day before next refresh
+            # delay one day before next Analogue store refresh
             delaySeconds = 60 * 60 * 24
 
         self.__scheduler.enter(
