@@ -68,15 +68,17 @@ class CynanBotDiscord(discord.Client):
 
     def __refreshAnalogueStoreAndScheduleMore(self):
         messageText = self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText()
+        delay = self.__analogueSettingsHelper.getRefreshEverySeconds()
 
         if utils.isValidStr(messageText):
             # TODO perform Discord message here
             print(messageText)
 
-        # TODO should probably cancel greatly postpone next refresh if we pinged?
+            # delay one day before next refresh
+            delay = 60 * 60 * 24
 
         self.__scheduler.enter(
-            delay=self.__analogueSettingsHelper.getRefreshEverySeconds(),
+            delay=delay,
             priority=1,
             action=self.__refreshAnalogueStoreAndScheduleMore()
         )
