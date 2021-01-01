@@ -3,6 +3,7 @@ import sched
 import time
 
 import discord
+import nest_asyncio
 
 import CynanBotCommon.utils as utils
 from analogueSettingsHelper import AnalogueSettingsHelper
@@ -10,6 +11,9 @@ from CynanBotCommon.analogueStoreRepository import (AnalogueStoreEntry,
                                                     AnalogueStoreRepository,
                                                     AnalogueStoreStock)
 
+
+# fixes dumb python async stuff
+nest_asyncio.apply()
 
 class CynanBotDiscord(discord.Client):
 
