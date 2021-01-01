@@ -13,7 +13,11 @@ class AnalogueSettingsHelper():
 
         self.__analogueSettingsFile = analogueSettingsFile
 
+    def addUserToNotify(self, user: str):
+        if not utils.isValidStr(user):
+            raise ValueError(f'user argument is malformed: \"{user}\"')
 
+        # TODO
 
     def getChannelId(self):
         jsonContents = self.__readJson()
