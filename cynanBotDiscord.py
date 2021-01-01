@@ -55,12 +55,12 @@ class CynanBotDiscord(discord.Client):
         if not utils.hasItems(priorityEntriesInStock) or not utils.hasItems(priorityProductTypesInStock):
             return None
 
-        text = '**Priority items in stock**'
+        text = '**Priority items in stock!** 🎮'
 
         for storeEntry in priorityEntriesInStock:
-            text = f'{text}\n{storeEntry.getName()}'
+            text = f'{text}\n - {storeEntry.getName()}'
 
-        text = f'{text}\n{self.__analogueStoreRepository.getStoreUrl()}'
+        text = f'{text}\n<{self.__analogueStoreRepository.getStoreUrl()}>\n'
 
         usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
         if utils.hasItems(usersToNotify):
