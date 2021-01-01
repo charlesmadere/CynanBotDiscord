@@ -13,6 +13,10 @@ class AnalogueSettingsHelper():
 
         self.__analogueSettingsFile = analogueSettingsFile
 
+    def getChannelId(self):
+        jsonContents = self.__readJson()
+        return jsonContents['channelId']
+
     def getPriorityStockProductTypes(self):
         jsonContents = self.__readJson()
         productTypeStrings = jsonContents['priorityStockProductTypes']
