@@ -15,7 +15,12 @@ class AnalogueSettingsHelper():
 
     def getChannelId(self):
         jsonContents = self.__readJson()
-        return jsonContents['channelId']
+        channelId = jsonContents['channelId']
+
+        if not utils.isValidStr(channelId):
+            raise ValueError(f'channelId is malformed: \"{channelId}\"')
+
+        return channelId
 
     def getPriorityStockProductTypes(self):
         jsonContents = self.__readJson()
