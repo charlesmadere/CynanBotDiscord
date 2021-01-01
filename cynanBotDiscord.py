@@ -1,3 +1,4 @@
+import asyncio
 import sched
 import time
 
@@ -33,7 +34,7 @@ class CynanBotDiscord(discord.Client):
 
     async def on_ready(self):
         print(f'{self.user} is ready!')
-        await self.__refreshAnalogueStoreAndScheduleMore()
+        await self.__refreshAnalogueStoreAndScheduleMoreAsync()
         self.__scheduler.run()
 
     def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self):
@@ -69,7 +70,7 @@ class CynanBotDiscord(discord.Client):
 
         return text
 
-    async def __refreshAnalogueStoreAndScheduleMore(self):
+    async def __refreshAnalogueStoreAndScheduleMoreAsync(self):
         text = self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText()
         delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
 
@@ -86,5 +87,9 @@ class CynanBotDiscord(discord.Client):
         self.__scheduler.enter(
             delay=delaySeconds,
             priority=1,
-            action=self.__refreshAnalogueStoreAndScheduleMore
+            action=self.__refreshAnalogueStoreAndScheduleMoreSync
         )
+
+    def __refreshAnalogueStoreAndScheduleMoreSync(self):
+        loop = asyncio.get_running_loop()
+        loop.run_until_complete(self.__refreshAnalogueStoreAndScheduleMoreAsync())
