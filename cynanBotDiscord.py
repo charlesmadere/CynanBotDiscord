@@ -18,6 +18,8 @@ class CynanBotDiscord(discord.Client):
         analogueStoreRepository: AnalogueStoreRepository,
         scheduler: sched
     ):
+        super().__init__()
+
         if analogueSettingsHelper is None:
             raise ValueError(f'analogueSettingsHelper argument is malformed: \"{analogueSettingsHelper}\"')
         elif analogueStoreRepository is None:
