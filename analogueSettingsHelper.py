@@ -48,25 +48,22 @@ class AnalogueSettingsHelper():
         jsonContents = self.__readJson()
         productTypeStrings = jsonContents['priorityStockProductTypes']
 
-        productTypesSet = set()
+        productTypes = set()
         for productTypeString in productTypeStrings:
             if productTypeString.lower() == 'dac':
-                productTypesSet.add(AnalogueProductType.DAC)
+                productTypes.add(AnalogueProductType.DAC)
             elif productTypeString.lower() == 'duo':
-                productTypesSet.add(AnalogueProductType.DUO)
+                productTypes.add(AnalogueProductType.DUO)
             elif productTypeString.lower() == 'mega sg':
-                productTypesSet.add(AnalogueProductType.MEGA_SG)
+                productTypes.add(AnalogueProductType.MEGA_SG)
             elif productTypeString.lower() == 'nt mini':
-                productTypesSet.add(AnalogueProductType.NT_MINI)
+                productTypes.add(AnalogueProductType.NT_MINI)
             elif productTypeString.lower() == 'pocket':
-                productTypesSet.add(AnalogueProductType.POCKET)
+                productTypes.add(AnalogueProductType.POCKET)
             elif productTypeString.lower() == 'super nt':
-                productTypesSet.add(AnalogueProductType.SUPER_NT)
+                productTypes.add(AnalogueProductType.SUPER_NT)
 
-        productTypesList = list(productTypesSet)
-        productTypesList.sort()
-
-        return productTypesList
+        return productTypes
 
     def getRefreshEveryMinutes(self):
         jsonContents = self.__readJson()
