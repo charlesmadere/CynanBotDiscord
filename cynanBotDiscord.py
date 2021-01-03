@@ -41,7 +41,7 @@ class CynanBotDiscord(discord.Client):
         await self.__refreshAnalogueStoreAndScheduleMoreAsync()
         self.__scheduler.run()
 
-    def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self):
+    def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self, guildMembers):
         storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
         if not utils.hasItems(storeEntries):
             return None
@@ -60,7 +60,7 @@ class CynanBotDiscord(discord.Client):
         if not utils.hasItems(priorityEntriesInStock) or not utils.hasItems(priorityProductTypesInStock):
             return None
 
-        text = 'ℹ **Priority items are in stock!** ℹ'
+        text = '**Priority items are in stock!**'
 
         for storeEntry in priorityEntriesInStock:
             text = f'{text}\n - {storeEntry.getName()}'
@@ -68,21 +68,37 @@ class CynanBotDiscord(discord.Client):
         text = f'{text}\n<{self.__analogueStoreRepository.getStoreUrl()}>\n'
 
         usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
-        if utils.hasItems(usersToNotify):
+        if utils.hasItems(usersToNotify) and guildMembers is not None:
             for userToNotify in usersToNotify:
-                text = f'{text}\n@{userToNotify}'
+                splits = userToNotify.split(sep='#', maxsplit=2)
+                name = splits[0]
+                discriminator = int(splits[1])
+                guildMember = discord.utils.get(guildMembers, name=name)
+
+                print(f'name:{name},discriminator:{discriminator},guildMember:{guildMember}')
+
+                if guildMember is not None:
+                    text = f'{text}\n@{guildMember.mention}'
 
         return text
 
     async def __refreshAnalogueStoreAndScheduleMoreAsync(self):
-        text = self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText()
+        channelId = self.__analogueSettingsHelper.getChannelId()
+        channel = self.get_channel(channelId)
+
+        if channel is None:
+            raise RuntimeError(f'Unable to find channel with ID: \"{channelId}\"')
+
+        guild = channel.guild
+
+        if guild is None:
+            raise RuntimeError(f'No guild returned for channel \"{channel.name}\" with ID: \"{channelId}\"')
+
+        text = self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText(guild.members)
         delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
 
         if utils.isValidStr(text):
-            channelId = self.__analogueSettingsHelper.getChannelId()
-            print(f'Sending Analogue stock message to channel \"{channelId}\":\n{text}')
-
-            channel = self.get_channel(channelId)
+            print(f'======\nSending Analogue stock message to channel \"{channel.name}\":\n{text}\n======')
             await channel.send(text)
 
             # delay one day before next Analogue store refresh
