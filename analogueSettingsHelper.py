@@ -26,15 +26,7 @@ class AnalogueSettingsHelper():
         elif not utils.isValidStr(name):
             raise ValueError(f'name argument is malformed: \"{name}\"')
 
-        if not os.path.exists(self.__analogueSettingsFile):
-            raise FileNotFoundError(f'Analogue settings file not found: \"{self.__analogueSettingsFile}\"')
-
-        with open(self.__analogueSettingsFile, 'r') as file:
-            jsonContents = json.load(file)
-
-        if jsonContents is None:
-            raise IOError(f'Error reading from Analogue settings file: \"{self.__analogueSettingsFile}\"')
-
+        jsonContents = self.__readJson()
         add = True
 
         for userJson in jsonContents['usersToNotify']:
@@ -147,4 +139,4 @@ class AnalogueUserToNotify():
         return f'{self.__name}#{self.__discriminator}'
 
     def toStr(self):
-        return f'{self.__name}#{self.__discriminator} ({self.__id})'
+        return f'{self.getNameAndDiscriminator()} ({self.__id})'
