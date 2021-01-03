@@ -60,7 +60,7 @@ class CynanBotDiscord(discord.Client):
         if not utils.hasItems(priorityEntriesInStock) or not utils.hasItems(priorityProductTypesInStock):
             return None
 
-        text = '**Priority items in stock!** 🎮'
+        text = 'ℹ **Priority items are in stock!** ℹ'
 
         for storeEntry in priorityEntriesInStock:
             text = f'{text}\n - {storeEntry.getName()}'
