@@ -6,7 +6,7 @@ import discord
 import nest_asyncio
 
 import CynanBotCommon.utils as utils
-from analogueSettingsHelper import AnalogueSettingsHelper
+from analogueSettingsHelper import AnalogueSettingsHelper, AnalogueUserToNotify
 from CynanBotCommon.analogueStoreRepository import (AnalogueStoreEntry,
                                                     AnalogueStoreRepository,
                                                     AnalogueStoreStock)
@@ -69,13 +69,10 @@ class CynanBotDiscord(discord.Client):
 
         usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
         if utils.hasItems(usersToNotify) and guildMembers is not None:
-            for userToNotify in usersToNotify:
-                splits = userToNotify.split(sep='#', maxsplit=2)
-                name = splits[0]
-                discriminator = int(splits[1])
-                guildMember = discord.utils.get(guildMembers, name=name)
+            for user in usersToNotify:
+                guildMember = discord.utils.get(guildMembers, id=user.getId())
 
-                print(f'name:{name},discriminator:{discriminator},guildMember:{guildMember}')
+                print(f'user:{user},guildMember:{guildMember}')
 
                 if guildMember is not None:
                     text = f'{text}\n@{guildMember.mention}'

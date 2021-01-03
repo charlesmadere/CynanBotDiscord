@@ -13,9 +13,18 @@ class AnalogueSettingsHelper():
 
         self.__analogueSettingsFile = analogueSettingsFile
 
-    def addUserToUsersToNotify(self, user: str):
-        if not utils.isValidStr(user):
-            raise ValueError(f'user argument is malformed: \"{user}\"')
+    def addUserToUsersToNotify(
+        self,
+        discriminator: int,
+        _id: int,
+        name: str
+    ):
+        if discriminator is None:
+            raise ValueError(f'discriminator argument is malformed: \"{discriminator}\"')
+        elif _id is None:
+            raise ValueError(f'_id argument is malformed: \"{_id}\"')
+        elif not utils.isValidStr(name):
+            raise ValueError(f'name argument is malformed: \"{name}\"')
 
         if not os.path.exists(self.__analogueSettingsFile):
             raise FileNotFoundError(f'Analogue settings file not found: \"{self.__analogueSettingsFile}\"')
@@ -26,19 +35,25 @@ class AnalogueSettingsHelper():
         if jsonContents is None:
             raise IOError(f'Error reading from Analogue settings file: \"{self.__analogueSettingsFile}\"')
 
-        # dancing between set and list in order to prevent duplicates
-        usersSet = set(jsonContents['usersToNotify'])
-        usersSet.add(user)
-        usersList = list(usersSet)
-        usersList.sort()
+        add = True
 
-        # make sure to use a list here, an exception will occur if you try to write a set to the JSON
-        jsonContents['usersToNotify'] = usersList
+        for userJson in jsonContents['usersToNotify']:
+            if utils.getIntFromDict(userJson, 'id') == _id:
+                userJson['discriminator'] = discriminator
+                userJson['name'] = name
+                add = False
+
+        if add:
+            userJson.append({
+                'discriminator': discriminator,
+                'id': _id,
+                'name': name
+            })
 
         with open(self.__analogueSettingsFile, 'w') as file:
             json.dump(jsonContents, file, indent=4, sort_keys=True)
 
-        print(f'Saved new user \"{user}\" as a user to notify ({utils.getNowTimeText()})')
+        print(f'Saved new user \"{name}#{discriminator}\" (ID {_id}) as a user to notify ({utils.getNowTimeText()})')
 
     def getChannelId(self):
         jsonContents = self.__readJson()
@@ -74,7 +89,16 @@ class AnalogueSettingsHelper():
 
     def getUsersToNotify(self):
         jsonContents = self.__readJson()
-        return jsonContents['usersToNotify']
+        users = list()
+
+        for userJson in jsonContents['usersToNotify']:
+            users.append(AnalogueUserToNotify(
+                discriminator=utils.getIntFromDict(userJson, 'discriminator'),
+                _id=utils.getIntFromDict(userJson, 'id'),
+                name=utils.getStrFromDict(userJson, 'name')
+            ))
+
+        return users
 
     def __readJson(self):        
         if not os.path.exists(self.__analogueSettingsFile):
@@ -89,3 +113,32 @@ class AnalogueSettingsHelper():
             raise ValueError(f'JSON contents of Analogue Settings file \"{self.__analogueSettingsFile}\" is empty')
 
         return jsonContents
+
+
+class AnalogueUserToNotify():
+
+    def __init__(
+        self,
+        discriminator: int,
+        _id: int,
+        name: str
+    ):
+        if discriminator is None:
+            raise ValueError(f'discriminator argument is malformed: {discriminator}')
+        elif _id is None:
+            raise ValueError(f'_id argument is malformed: \"{_id}\"')
+        elif not utils.isValidStr(name):
+            raise ValueError(f'name argument is malformed: \"{name}\"')
+
+        self.__discriminator = discriminator
+        self.__id = _id
+        self.__name = name
+
+    def getDiscriminator(self): 
+        return self.__discriminator
+
+    def getId(self):
+        return self.__id
+
+    def getName(self):
+        return self.__name

@@ -6,7 +6,15 @@
     ],
     "refreshEveryMinutes": 5,
     "usersToNotify": [
-        "Foo#1234",
-        "Bar#5678"
+        {
+            "discriminator": 1234,
+            "id": 123456789,
+            "name": "Hello"
+        },
+        {
+            "discriminator": 5678,
+            "id": 987654321,
+            "name": "World!"
+        }
     ]
 }
