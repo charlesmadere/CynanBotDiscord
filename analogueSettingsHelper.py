@@ -26,13 +26,14 @@ class AnalogueSettingsHelper():
         if jsonContents is None:
             raise IOError(f'Error reading from Analogue settings file: \"{self.__analogueSettingsFile}\"')
 
-        users = jsonContents['usersToNotify']
+        # dancing between set and list in order to prevent duplicates
+        usersSet = set(jsonContents['usersToNotify'])
+        usersSet.add(user)
+        usersList = list(usersSet)
+        usersList.sort()
 
-        for existingUser in users:
-            if existingUser.lower() == user.lower():
-                raise RuntimeError(f'User \"{user}\" is already set as a user to notify')
-
-        users.append(user)
+        # make sure to use a list here, an exception will occur if you try to write a set to the JSON
+        jsonContents['usersToNotify'] = usersList
 
         with open(self.__analogueSettingsFile, 'w') as file:
             json.dump(jsonContents, file, indent=4, sort_keys=True)
@@ -47,18 +48,25 @@ class AnalogueSettingsHelper():
         jsonContents = self.__readJson()
         productTypeStrings = jsonContents['priorityStockProductTypes']
 
-        productTypes = list()
+        productTypesSet = set()
         for productTypeString in productTypeStrings:
-            if productTypeString.lower() == 'mega sg':
-                productTypes.append(AnalogueProductType.MEGA_SG)
+            if productTypeString.lower() == 'dac':
+                productTypesSet.add(AnalogueProductType.DAC)
+            elif productTypeString.lower() == 'duo':
+                productTypesSet.add(AnalogueProductType.DUO)
+            elif productTypeString.lower() == 'mega sg':
+                productTypesSet.add(AnalogueProductType.MEGA_SG)
             elif productTypeString.lower() == 'nt mini':
-                productTypes.append(AnalogueProductType.NT_MINI)
+                productTypesSet.add(AnalogueProductType.NT_MINI)
             elif productTypeString.lower() == 'pocket':
-                productTypes.append(AnalogueProductType.POCKET)
+                productTypesSet.add(AnalogueProductType.POCKET)
             elif productTypeString.lower() == 'super nt':
-                productTypes.append(AnalogueProductType.SUPER_NT)
+                productTypesSet.add(AnalogueProductType.SUPER_NT)
 
-        return productTypes
+        productTypesList = list(productTypesSet)
+        productTypesList.sort()
+
+        return productTypesList
 
     def getRefreshEveryMinutes(self):
         jsonContents = self.__readJson()
