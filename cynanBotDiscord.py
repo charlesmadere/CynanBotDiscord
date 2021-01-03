@@ -23,7 +23,7 @@ class CynanBotDiscord(discord.Client):
         analogueStoreRepository: AnalogueStoreRepository,
         scheduler: sched
     ):
-        super().__init__()
+        super().__init__(status=discord.Status.online)
 
         if analogueSettingsHelper is None:
             raise ValueError(f'analogueSettingsHelper argument is malformed: \"{analogueSettingsHelper}\"')
