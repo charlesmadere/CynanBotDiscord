@@ -13,11 +13,31 @@ class AnalogueSettingsHelper():
 
         self.__analogueSettingsFile = analogueSettingsFile
 
-    def addUserToNotify(self, user: str):
+    def addUserToUsersToNotify(self, user: str):
         if not utils.isValidStr(user):
             raise ValueError(f'user argument is malformed: \"{user}\"')
 
-        # TODO
+        if not os.path.exists(self.__analogueSettingsFile):
+            raise FileNotFoundError(f'Analogue settings file not found: \"{self.__analogueSettingsFile}\"')
+
+        with open(self.__analogueSettingsFile, 'r') as file:
+            jsonContents = json.load(file)
+
+        if jsonContents is None:
+            raise IOError(f'Error reading from Analogue settings file: \"{self.__analogueSettingsFile}\"')
+
+        users = jsonContents['usersToNotify']
+
+        for existingUser in users:
+            if existingUser.lower() == user.lower():
+                raise RuntimeError(f'User \"{user}\" is already set as a user to notify')
+
+        users.append(user)
+
+        with open(self.__analogueSettingsFile, 'w') as file:
+            json.dump(jsonContents, file, indent=4, sort_keys=True)
+
+        print(f'Saved new user \"{user}\" as a user to notify ({utils.getNowTimeText()})')
 
     def getChannelId(self):
         jsonContents = self.__readJson()
