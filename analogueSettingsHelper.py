@@ -44,7 +44,7 @@ class AnalogueSettingsHelper():
                 add = False
 
         if add:
-            userJson.append({
+            jsonContents['usersToNotify'].append({
                 'discriminator': discriminator,
                 'id': _id,
                 'name': name
