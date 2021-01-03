@@ -142,3 +142,9 @@ class AnalogueUserToNotify():
 
     def getName(self):
         return self.__name
+
+    def getNameAndDiscriminator(self):
+        return f'{self.__name}#{self.__discriminator}'
+
+    def toStr(self):
+        return f'{self.__name}#{self.__discriminator} ({self.__id})'
