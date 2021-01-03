@@ -41,7 +41,7 @@ class CynanBotDiscord(discord.Client):
         await self.__refreshAnalogueStoreAndScheduleMoreAsync()
         self.__scheduler.run()
 
-    def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self, guildMembers):
+    async def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self, guild):
         storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
         if not utils.hasItems(storeEntries):
             return None
@@ -68,14 +68,14 @@ class CynanBotDiscord(discord.Client):
         text = f'{text}\n<{self.__analogueStoreRepository.getStoreUrl()}>'
 
         usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
-        if utils.hasItems(usersToNotify) and guildMembers is not None:
+        if utils.hasItems(usersToNotify):
             for user in usersToNotify:
-                guildMember = discord.utils.get(guildMembers, id=user.getId())
+                guildMember = await guild.fetch_member(user.getId())
 
-                print(f'user:{user},guildMember:{guildMember}')
-
-                if guildMember is not None:
-                    text = f'{text}\n@{guildMember.mention}'
+                if guildMember is None:
+                    print(f'Unable to find user: {user.toStr()}')
+                else:
+                    text = f'{text}\n - {guildMember.mention}'
 
         return text
 
@@ -91,7 +91,7 @@ class CynanBotDiscord(discord.Client):
         if guild is None:
             raise RuntimeError(f'No guild returned for channel \"{channel.name}\" with ID: \"{channelId}\"')
 
-        text = self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText(guild.members)
+        text = await self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText(guild)
         delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
 
         if utils.isValidStr(text):
