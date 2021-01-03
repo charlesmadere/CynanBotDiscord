@@ -106,6 +106,22 @@ class AnalogueSettingsHelper():
 
         return jsonContents
 
+    def removeUserFromUsersToNotify(self, _id: int):
+        if _id is None:
+            raise ValueError(f'_id argument is malformed: \"{_id}\"')
+
+        jsonContents = self.__readJson()
+
+        for userJson in jsonContents['usersToNotify']:
+            if utils.getIntFromDict(userJson, 'id') == _id:
+                jsonContents['usersToNotify'].remove(userJson)
+                break
+
+        with open(self.__analogueSettingsFile, 'w') as file:
+            json.dump(jsonContents, file, indent=4, sort_keys=True)
+
+        print(f'Removed user (ID {_id}) from users to notify ({utils.getNowTimeText()})')
+
 
 class AnalogueUserToNotify():
 
