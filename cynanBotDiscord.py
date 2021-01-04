@@ -78,7 +78,7 @@ class CynanBotDiscord(Bot):
                 guildMember = await guild.fetch_member(user.getId())
 
                 if guildMember is None:
-                    print(f'Unable to find user: {user.toStr()}')
+                    print(f'Unable to find user {user.toStr()} in guild {guild.name}')
                 else:
                     text = f'{text}\n - {guildMember.mention}'
 
@@ -100,7 +100,7 @@ class CynanBotDiscord(Bot):
         delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
 
         if utils.isValidStr(text):
-            print(f'======\nSending Analogue stock message to channel \"{channel.name}\":\n{text}\n======')
+            print(f'Sending Analogue stock message to channel \"{channel.name}\" ({utils.getNowTimeText}):\n{text}')
             await channel.send(text)
 
             # delay one day before next Analogue store refresh
