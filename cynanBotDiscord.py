@@ -70,7 +70,7 @@ class CynanBotDiscord(Bot):
         for storeEntry in priorityEntriesInStock:
             text = f'{text}\n - {storeEntry.getName()}'
 
-        text = f'{text}\n<{self.__analogueStoreRepository.getStoreUrl()}>'
+        text = f'{text}\n<{self.__analogueStoreRepository.getStoreUrl()}>\n'
 
         usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
         if utils.hasItems(usersToNotify):
