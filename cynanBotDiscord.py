@@ -39,6 +39,9 @@ class CynanBotDiscord(Bot):
         self.loop.create_task(self.__refreshAnalogueStoreAndWait())
 
     async def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self, guild):
+        if guild is None:
+            raise ValueError(f'guild argument is malformed: \"{guild}\"')
+
         storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
         if not utils.hasItems(storeEntries):
             return None
@@ -76,17 +79,11 @@ class CynanBotDiscord(Bot):
 
         return text
 
-    async def __refreshAnalogueStoreAndWait(self):
-        channelId = self.__analogueSettingsHelper.getChannelId()
-        channel = self.get_channel(channelId)
-
+    async def __refreshAnalogueStore(self, channel, guild):
         if channel is None:
-            raise RuntimeError(f'Unable to find channel with ID: \"{channelId}\"')
-
-        guild = channel.guild
-
-        if guild is None:
-            raise RuntimeError(f'No guild returned for channel \"{channel.name}\" with ID: \"{channelId}\"')
+            raise ValueError(f'channel argument is malformed: \"{channel}\"')
+        elif guild is None:
+            raise ValueError(f'guild argument is malformed: \"{guild}\"')
 
         text = await self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText(guild)
         delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
@@ -98,7 +95,22 @@ class CynanBotDiscord(Bot):
             # delay one day before next Analogue store refresh
             delaySeconds = 60 * 60 * 24
 
-        if self.is_closed():
-            print(f'Bot is closed, not scheduling another refresh... ({utils.getNowTimeText()})')
-        else:
+        return delaySeconds
+
+    async def __refreshAnalogueStoreAndWait(self):
+        await self.wait_until_ready()
+
+        channelId = self.__analogueSettingsHelper.getChannelId()
+        channel = await self.fetch_channel(channelId)
+
+        if channel is None:
+            raise RuntimeError(f'Unable to find channel with ID: \"{channelId}\"')
+
+        guild = channel.guild
+
+        if guild is None:
+            raise RuntimeError(f'No guild returned for channel \"{channel.name}\" with ID: \"{channelId}\"')
+
+        while not self.is_closed():
+            delaySeconds = await self.__refreshAnalogueStore(channel, guild)
             await asyncio.sleep(delaySeconds)
