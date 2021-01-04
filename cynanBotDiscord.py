@@ -13,16 +13,12 @@ from CynanBotCommon.analogueStoreRepository import (AnalogueStoreEntry,
                                                     AnalogueStoreStock)
 
 
-# fixes dumb python async stuff
-nest_asyncio.apply()
-
 class CynanBotDiscord(Bot):
 
     def __init__(
         self,
         analogueSettingsHelper: AnalogueSettingsHelper,
-        analogueStoreRepository: AnalogueStoreRepository,
-        scheduler: sched
+        analogueStoreRepository: AnalogueStoreRepository
     ):
         super().__init__(
             command_prefix='!',
@@ -34,17 +30,13 @@ class CynanBotDiscord(Bot):
             raise ValueError(f'analogueSettingsHelper argument is malformed: \"{analogueSettingsHelper}\"')
         elif analogueStoreRepository is None:
             raise ValueError(f'analogueStoreRepository argument is malformed: \"{analogueStoreRepository}\"')
-        elif scheduler is None:
-            raise ValueError(f'scheduler argument is malformed: \"{scheduler}\"')
 
         self.__analogueSettingsHelper = analogueSettingsHelper
         self.__analogueStoreRepository = analogueStoreRepository
-        self.__scheduler = scheduler
 
     async def on_ready(self):
         print(f'{self.user} is ready!')
-        await self.__refreshAnalogueStoreAndScheduleMoreAsync()
-        self.__scheduler.run()
+        self.loop.create_task(self.__refreshAnalogueStoreAndWait())
 
     async def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self, guild):
         storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
@@ -84,7 +76,7 @@ class CynanBotDiscord(Bot):
 
         return text
 
-    async def __refreshAnalogueStoreAndScheduleMoreAsync(self):
+    async def __refreshAnalogueStoreAndWait(self):
         channelId = self.__analogueSettingsHelper.getChannelId()
         channel = self.get_channel(channelId)
 
@@ -106,12 +98,7 @@ class CynanBotDiscord(Bot):
             # delay one day before next Analogue store refresh
             delaySeconds = 60 * 60 * 24
 
-        self.__scheduler.enter(
-            delay=delaySeconds,
-            priority=1,
-            action=self.__refreshAnalogueStoreAndScheduleMoreSync
-        )
-
-    def __refreshAnalogueStoreAndScheduleMoreSync(self):
-        loop = asyncio.get_running_loop()
-        loop.run_until_complete(self.__refreshAnalogueStoreAndScheduleMoreAsync())
+        if self.is_closed():
+            print(f'Bot is closed, not scheduling another refresh... ({utils.getNowTimeText()})')
+        else:
+            await asyncio.sleep(delaySeconds)
