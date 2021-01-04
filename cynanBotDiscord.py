@@ -4,6 +4,7 @@ import time
 
 import discord
 import nest_asyncio
+from discord.ext.commands import Bot
 
 import CynanBotCommon.utils as utils
 from analogueSettingsHelper import AnalogueSettingsHelper, AnalogueUserToNotify
@@ -15,7 +16,7 @@ from CynanBotCommon.analogueStoreRepository import (AnalogueStoreEntry,
 # fixes dumb python async stuff
 nest_asyncio.apply()
 
-class CynanBotDiscord(discord.Client):
+class CynanBotDiscord(Bot):
 
     def __init__(
         self,
@@ -23,7 +24,11 @@ class CynanBotDiscord(discord.Client):
         analogueStoreRepository: AnalogueStoreRepository,
         scheduler: sched
     ):
-        super().__init__(status=discord.Status.online)
+        super().__init__(
+            command_prefix='!',
+            intents=discord.Intents.default(),
+            status=discord.Status.online
+        )
 
         if analogueSettingsHelper is None:
             raise ValueError(f'analogueSettingsHelper argument is malformed: \"{analogueSettingsHelper}\"')
