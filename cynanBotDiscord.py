@@ -4,7 +4,7 @@ import time
 
 import discord
 import nest_asyncio
-from discord.ext.commands import Bot
+from discord.ext import commands
 
 import CynanBotCommon.utils as utils
 from analogueSettingsHelper import AnalogueSettingsHelper, AnalogueUserToNotify
@@ -13,7 +13,7 @@ from CynanBotCommon.analogueStoreRepository import (AnalogueStoreEntry,
                                                     AnalogueStoreStock)
 
 
-class CynanBotDiscord(Bot):
+class CynanBotDiscord(commands.Bot):
 
     def __init__(
         self,
@@ -38,10 +38,44 @@ class CynanBotDiscord(Bot):
         print(f'{self.user} is ready!')
         self.loop.create_task(self.__refreshAnalogueStoreAndWait())
 
-    async def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self, guild):
-        if guild is None:
-            raise ValueError(f'guild argument is malformed: \"{guild}\"')
+    async def __fetchAllMembers(self):
+        await self.wait_until_ready()
 
+        guild = self.__fetchGuild()
+
+        members = await guild.fetch_members(limit=None)
+        if members is None:
+            raise ValueError(f'Guild \"{guild.name}\" failed to fetch members')
+
+        membersList = members.flatten()
+        if membersList is None or len(membersList) == 0:
+            raise ValueError(f'Guild \"{guild.name}\" has no members')
+
+        return membersList
+
+    async def __fetchChannel(self):
+        await self.wait_until_ready()
+
+        channelId = self.__analogueSettingsHelper.getChannelId()
+        channel = await self.fetch_channel(channelId)
+
+        if channel is None:
+            raise RuntimeError(f'Unable to find channel with ID: \"{channelId}\"')
+
+        return channel
+
+    async def __fetchGuild(self):
+        await self.wait_until_ready()
+
+        channel = self.__fetchChannel()
+        guild = channel.guild
+
+        if guild is None:
+            raise RuntimeError(f'No guild returned for channel \"{channel.name}\"')
+
+        return guild
+
+    async def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self):
         storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
         if not utils.hasItems(storeEntries):
             return None
@@ -69,6 +103,8 @@ class CynanBotDiscord(Bot):
 
         usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
         if utils.hasItems(usersToNotify):
+            guild = self.__fetchGuild()
+
             for user in usersToNotify:
                 guildMember = await guild.fetch_member(user.getId())
 
@@ -79,16 +115,13 @@ class CynanBotDiscord(Bot):
 
         return text
 
-    async def __refreshAnalogueStore(self, channel, guild):
-        if channel is None:
-            raise ValueError(f'channel argument is malformed: \"{channel}\"')
-        elif guild is None:
-            raise ValueError(f'guild argument is malformed: \"{guild}\"')
-
-        text = await self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText(guild)
+    async def __refreshAnalogueStore(self):
+        text = await self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText()
         delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
 
         if utils.isValidStr(text):
+            channel = self.__fetchChannel()
+
             print(f'Sending Analogue stock message to channel \"{channel.name}\" ({utils.getNowTimeText}):\n{text}')
             await channel.send(text)
 
@@ -100,17 +133,6 @@ class CynanBotDiscord(Bot):
     async def __refreshAnalogueStoreAndWait(self):
         await self.wait_until_ready()
 
-        channelId = self.__analogueSettingsHelper.getChannelId()
-        channel = await self.fetch_channel(channelId)
-
-        if channel is None:
-            raise RuntimeError(f'Unable to find channel with ID: \"{channelId}\"')
-
-        guild = channel.guild
-
-        if guild is None:
-            raise RuntimeError(f'No guild returned for channel \"{channel.name}\" with ID: \"{channelId}\"')
-
         while not self.is_closed():
-            delaySeconds = await self.__refreshAnalogueStore(channel, guild)
+            delaySeconds = await self.__refreshAnalogueStore()
             await asyncio.sleep(delaySeconds)
