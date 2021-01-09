@@ -19,9 +19,9 @@ class AnalogueSettingsHelper():
         _id: int,
         name: str
     ):
-        if discriminator is None:
+        if not utils.isValidNum(discriminator):
             raise ValueError(f'discriminator argument is malformed: \"{discriminator}\"')
-        elif _id is None:
+        elif not utils.isValidNum(_id):
             raise ValueError(f'_id argument is malformed: \"{_id}\"')
         elif not utils.isValidStr(name):
             raise ValueError(f'name argument is malformed: \"{name}\"')
@@ -107,7 +107,7 @@ class AnalogueSettingsHelper():
         return jsonContents
 
     def removeUserFromUsersToNotify(self, _id: int):
-        if _id is None:
+        if not utils.isValidNum(_id):
             raise ValueError(f'_id argument is malformed: \"{_id}\"')
 
         jsonContents = self.__readJson()
@@ -131,9 +131,9 @@ class AnalogueUserToNotify():
         _id: int,
         name: str
     ):
-        if discriminator is None:
+        if not utils.isValidNum(discriminator):
             raise ValueError(f'discriminator argument is malformed: {discriminator}')
-        elif _id is None:
+        elif not utils.isValidNum(_id):
             raise ValueError(f'_id argument is malformed: \"{_id}\"')
         elif not utils.isValidStr(name):
             raise ValueError(f'name argument is malformed: \"{name}\"')
