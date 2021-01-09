@@ -34,9 +34,22 @@ class CynanBotDiscord(commands.Bot):
         self.__analogueSettingsHelper = analogueSettingsHelper
         self.__analogueStoreRepository = analogueStoreRepository
 
+        self.add_command(self.addUser)
+        self.add_command(self.removeUser)
+
     async def on_ready(self):
         print(f'{self.user} is ready!')
         self.loop.create_task(self.__refreshAnalogueStoreAndWait())
+
+    @commands.command()
+    async def addUser(self, ctx, name):
+        # TODO
+        pass
+
+    @commands.command()
+    async def removeUser(self, ctx, name):
+        # TODO
+        pass
 
     async def __fetchAllMembers(self):
         await self.wait_until_ready()
