@@ -74,7 +74,12 @@ class AnalogueSettingsHelper():
 
     def getRefreshEveryMinutes(self):
         jsonContents = self.__readJson()
-        return utils.getIntFromDict(jsonContents, 'refreshEveryMinutes')
+        refreshEveryMinutes = utils.getIntFromDict(jsonContents, 'refreshEveryMinutes')
+
+        if refreshEveryMinutes < 1:
+            raise ValueError(f'\"refreshEveryMinutes\" is an illegal value: {refreshEveryMinutes}')
+
+        return refreshEveryMinutes
 
     def getRefreshEverySeconds(self):
         return self.getRefreshEveryMinutes() * 60
