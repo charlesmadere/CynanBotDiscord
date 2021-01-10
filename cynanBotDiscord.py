@@ -99,10 +99,15 @@ class CynanBotDiscord(commands.Bot):
 
         await self.wait_until_ready()
 
-        priorityStockProductTypes = self.__analogueSettingsHelper.getPriorityStockProductTypes()
+        priorityStockProductTypes = self.__analogueSettingsHelper.getPriorityStockProductStrings()
 
         if utils.hasItems(priorityStockProductTypes):
-            productTypesString = ', '.join(priorityStockProductTypes)
+            productTypesStrings = list()
+
+            for productTypeString in priorityStockProductTypes:
+                productTypesStrings.append(f'`{productTypeString}`')
+
+            productTypesString = ', '.join(productTypesStrings)
             await ctx.send(f'Analogue products currently being monitored for availability: {productTypesString}')
         else:
             await ctx.send('no Analogue products are currently being monitored for availability')
