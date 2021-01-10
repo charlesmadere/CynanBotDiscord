@@ -31,7 +31,7 @@ cynanBotDiscord.run(discordAuthHelper.getToken())
 # https://discordpy.readthedocs.io/en/latest/ext/commands/commands.html                           #
 #                                                                                                 #
 # I hate putting the commands here like this, but I haven't found a way to have them completely   #
-# isolated within the CynanBotDiscord class :( Maybe someday when I've learn more about Python.   #
+# isolated within the CynanBotDiscord class :( Maybe someday when I've learned more about Python. #
 ###################################################################################################
 
 @cynanBotDiscord.command()
