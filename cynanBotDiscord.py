@@ -66,7 +66,7 @@ class CynanBotDiscord(commands.Bot):
             raise ValueError(f'Guild \"{guild.name}\" failed to fetch members')
 
         membersList = members.flatten()
-        if membersList is None or len(membersList) == 0:
+        if not utils.hasItems(membersList):
             raise ValueError(f'Guild \"{guild.name}\" has no members')
 
         return membersList
@@ -104,7 +104,7 @@ class CynanBotDiscord(commands.Bot):
 
         mentions = message.mentions
 
-        if mentions is None or len(mentions) == 0:
+        if not utils.hasItems(mentions):
             raise ValueError(f'No users mentioned: ctx ({ctx}) message: \"{message}\"')
 
         return mentions
