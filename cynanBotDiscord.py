@@ -34,22 +34,27 @@ class CynanBotDiscord(commands.Bot):
         self.__analogueSettingsHelper = analogueSettingsHelper
         self.__analogueStoreRepository = analogueStoreRepository
 
-        self.add_command(self.addUser)
-        self.add_command(self.removeUser)
-
     async def on_ready(self):
         print(f'{self.user} is ready!')
         self.loop.create_task(self.__refreshAnalogueStoreAndWait())
 
-    @commands.command()
-    async def addUser(self, ctx, name):
-        # TODO
-        pass
+    async def addUser(self, ctx):
+        await self.wait_until_ready()
 
-    @commands.command()
-    async def removeUser(self, ctx, name):
-        # TODO
-        pass
+        mentions = self.__getMentionsFromCtx(ctx)
+        discriminator = int(mentions[0].discriminator)
+        _id = int(mentions[0].id)
+        name = mentions[0].name
+
+        user = self.__analogueSettingsHelper.addUserToUsersToNotify(
+            discriminator=discriminator,
+            _id=_id,
+            name=name
+        )
+
+        if user is not None:
+            print(f'Added {user.toStr()} to users to notify ({utils.getNowTimeText()})')
+            await ctx.send(f'Added {user.getNameAndDiscriminator()} to users to notify')
 
     async def __fetchAllMembers(self):
         await self.wait_until_ready()
@@ -73,7 +78,7 @@ class CynanBotDiscord(commands.Bot):
         channel = await self.fetch_channel(channelId)
 
         if channel is None:
-            raise RuntimeError(f'Unable to find channel with ID: \"{channelId}\"')
+            raise RuntimeError(f'No channel returned for ID: \"{channelId}\"')
 
         return channel
 
@@ -84,9 +89,25 @@ class CynanBotDiscord(commands.Bot):
         guild = channel.guild
 
         if guild is None:
-            raise RuntimeError(f'No guild returned for channel \"{channel.name}\"')
+            raise RuntimeError(f'No guild returned for channel: \"{channel.name}\"')
 
         return guild
+
+    def __getMentionsFromCtx(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        message = ctx.message
+
+        if message is None:
+            raise ValueError(f'ctx ({ctx}) message is malformed: \"{message}\"')
+
+        mentions = message.mentions
+
+        if mentions is None or len(mentions) == 0:
+            raise ValueError(f'No users mentioned: ctx ({ctx}) message: \"{message}\"')
+
+        return mentions
 
     async def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self):
         storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
@@ -149,3 +170,17 @@ class CynanBotDiscord(commands.Bot):
         while not self.is_closed():
             delaySeconds = await self.__refreshAnalogueStore()
             await asyncio.sleep(delaySeconds)
+
+    async def removeUser(self, ctx):
+        await self.wait_until_ready()
+
+        mentions = self.__getMentionsFromCtx(ctx)
+        _id = int(mentions[0].id)
+
+        user = self.__analogueSettingsHelper.removeUserFromUsersToNotify(
+            _id=_id
+        )
+
+        if user is not None:
+            print(f'Removed {user.toStr()} from users to notify ({utils.getNowTimeText()})')
+            await ctx.send(f'Removed {user.getNameAndDiscriminator()} from users to notify')
