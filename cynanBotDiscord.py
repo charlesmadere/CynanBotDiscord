@@ -93,6 +93,20 @@ class CynanBotDiscord(commands.Bot):
 
         return guild
 
+    async def listPriorityProducts(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        priorityStockProductTypes = self.__analogueSettingsHelper.getPriorityStockProductTypes()
+
+        if utils.hasItems(priorityStockProductTypes):
+            productTypesString = ', '.join(priorityStockProductTypes)
+            await ctx.send(f'Analogue products currently being monitored for availability: {productTypesString}')
+        else:
+            await ctx.send('no Analogue products are currently being monitored for availability')
+
     async def listUsers(self, ctx):
         if ctx is None:
             raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
