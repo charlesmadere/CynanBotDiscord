@@ -93,6 +93,26 @@ class CynanBotDiscord(commands.Bot):
 
         return guild
 
+    async def listUsers(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        users = self.__analogueSettingsHelper.getUsersToNotify()
+
+        if utils.hasItems(users):
+            userNames = list()
+
+            for user in users:
+                userNames.append(f'`{user.getNameAndDiscriminator()}`')
+
+            userNamesString = ', '.join(userNames)
+
+            await ctx.send(f'users who will be notified when priority Analogue items are available: {userNamesString}')
+        else:
+            await ctx.send('no users are set to be notified when priority Analogue items are available')
+
     def __getMentionsFromCtx(self, ctx):
         if ctx is None:
             raise ValueError(f'ctx argument is malformed: \"{ctx}\"')

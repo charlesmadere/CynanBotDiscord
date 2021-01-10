@@ -36,6 +36,10 @@ async def addUser(ctx, *args):
     await cynanBotDiscord.addUser(ctx)
 
 @cynanBotDiscord.command()
+async def listUsers(ctx, *args):
+    await cynanBotDiscord.listUsers(ctx)
+
+@cynanBotDiscord.command()
 async def removeUser(ctx, *args):
     await cynanBotDiscord.removeUser(ctx)
 
