@@ -44,7 +44,7 @@ class AnalogueSettingsHelper():
         if add:
             jsonContents['usersToNotify'].append(user.toJsonDict())
 
-        jsonContents['usersToNotify'].sort(key=lambda x: x['name'])
+        jsonContents['usersToNotify'].sort(key=lambda x: x['name'].lower())
 
         with open(self.__analogueSettingsFile, 'w') as file:
             json.dump(jsonContents, file, indent=4, sort_keys=True)
