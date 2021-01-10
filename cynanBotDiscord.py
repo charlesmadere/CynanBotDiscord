@@ -54,7 +54,7 @@ class CynanBotDiscord(commands.Bot):
 
         if user is not None:
             print(f'Added {user.toStr()} to users to notify ({utils.getNowTimeText()})')
-            await ctx.send(f'Added {user.getNameAndDiscriminator()} to users to notify')
+            await ctx.send(f'added `{user.getNameAndDiscriminator()}` to users to notify')
 
     async def __fetchAllMembers(self):
         await self.wait_until_ready()
@@ -183,4 +183,4 @@ class CynanBotDiscord(commands.Bot):
 
         if user is not None:
             print(f'Removed {user.toStr()} from users to notify ({utils.getNowTimeText()})')
-            await ctx.send(f'Removed {user.getNameAndDiscriminator()} from users to notify')
+            await ctx.send(f'removed `{user.getNameAndDiscriminator()}` from users to notify')
