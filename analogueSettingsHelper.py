@@ -56,10 +56,9 @@ class AnalogueSettingsHelper():
         return utils.getIntFromDict(jsonContents, 'channelId')
 
     def getPriorityStockProductTypes(self):
-        jsonContents = self.__readJson()
         productTypes = set()
 
-        for productTypeString in jsonContents['priorityStockProductTypes']:
+        for productTypeString in self.getPriorityStockProductStrings():
             if productTypeString.lower() == 'dac':
                 productTypes.add(AnalogueProductType.DAC)
             elif productTypeString.lower() == 'duo':
@@ -74,6 +73,10 @@ class AnalogueSettingsHelper():
                 productTypes.add(AnalogueProductType.SUPER_NT)
 
         return productTypes
+
+    def getPriorityStockProductStrings(self):
+        jsonContents = self.__readJson()
+        return jsonContents['priorityStockProductTypes']
 
     def getRefreshEveryMinutes(self):
         jsonContents = self.__readJson()
