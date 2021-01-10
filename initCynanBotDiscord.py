@@ -21,9 +21,6 @@ cynanBotDiscord = CynanBotDiscord(
     analogueStoreRepository=analogueStoreRepository
 )
 
-print('Starting CynanBotDiscord...')
-cynanBotDiscord.run(discordAuthHelper.getToken())
-
 
 ###################################################################################################
 # CynanBotDiscord Commands                                                                        #
@@ -41,3 +38,7 @@ async def addUser(ctx, *args):
 @cynanBotDiscord.command()
 async def removeUser(ctx, *args):
     await cynanBotDiscord.removeUser(ctx)
+
+
+print('Starting CynanBotDiscord...')
+cynanBotDiscord.run(discordAuthHelper.getToken())
