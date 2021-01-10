@@ -29,25 +29,27 @@ class AnalogueSettingsHelper():
         jsonContents = self.__readJson()
         add = True
 
+        user = AnalogueUserToNotify(
+            discriminator=discriminator,
+            _id=_id,
+            name=name
+        )
+
         for userJson in jsonContents['usersToNotify']:
-            if utils.getIntFromDict(userJson, 'id') == _id:
-                userJson['discriminator'] = discriminator
-                userJson['name'] = name
+            if utils.getIntFromDict(userJson, 'id') == user.getId():
+                userJson['discriminator'] = user.getDiscriminator()
+                userJson['name'] = user.getName()
                 add = False
 
         if add:
-            jsonContents['usersToNotify'].append({
-                'discriminator': discriminator,
-                'id': _id,
-                'name': name
-            })
+            jsonContents['usersToNotify'].append(user.toJsonDict())
 
         jsonContents['usersToNotify'].sort(key=lambda x: x['name'])
 
         with open(self.__analogueSettingsFile, 'w') as file:
             json.dump(jsonContents, file, indent=4, sort_keys=True)
 
-        print(f'Saved new user \"{name}#{discriminator}\" (ID {_id}) as a user to notify ({utils.getNowTimeText()})')
+        return user
 
     def getChannelId(self):
         jsonContents = self.__readJson()
@@ -55,10 +57,9 @@ class AnalogueSettingsHelper():
 
     def getPriorityStockProductTypes(self):
         jsonContents = self.__readJson()
-        productTypeStrings = jsonContents['priorityStockProductTypes']
-
         productTypes = set()
-        for productTypeString in productTypeStrings:
+
+        for productTypeString in jsonContents['priorityStockProductTypes']:
             if productTypeString.lower() == 'dac':
                 productTypes.add(AnalogueProductType.DAC)
             elif productTypeString.lower() == 'duo':
@@ -118,16 +119,25 @@ class AnalogueSettingsHelper():
             raise ValueError(f'_id argument is malformed: \"{_id}\"')
 
         jsonContents = self.__readJson()
+        user = None
 
         for userJson in jsonContents['usersToNotify']:
-            if utils.getIntFromDict(userJson, 'id') == _id:
+            userId = utils.getIntFromDict(userJson, 'id')
+
+            if userId == _id:
+                user = AnalogueUserToNotify(
+                    discriminator=userJson['discriminator'],
+                    _id=userId,
+                    name=userJson['name']
+                )
+
                 jsonContents['usersToNotify'].remove(userJson)
                 break
 
         with open(self.__analogueSettingsFile, 'w') as file:
             json.dump(jsonContents, file, indent=4, sort_keys=True)
 
-        print(f'Removed user (ID {_id}) from users to notify ({utils.getNowTimeText()})')
+        return user
 
 
 class AnalogueUserToNotify():
@@ -160,6 +170,13 @@ class AnalogueUserToNotify():
 
     def getNameAndDiscriminator(self):
         return f'{self.__name}#{self.__discriminator}'
+
+    def toJsonDict(self):
+        return {
+            'discriminator': self.__discriminator,
+            'id': self.__id,
+            'name': self.__name
+        }
 
     def toStr(self):
         return f'{self.getNameAndDiscriminator()} ({self.__id})'
