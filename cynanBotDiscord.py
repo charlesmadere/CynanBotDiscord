@@ -109,9 +109,9 @@ class CynanBotDiscord(commands.Bot):
 
             userNamesString = ', '.join(userNames)
 
-            await ctx.send(f'users who will be notified when priority Analogue items are available: {userNamesString}')
+            await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
         else:
-            await ctx.send('no users are set to be notified when priority Analogue items are available')
+            await ctx.send('no users are set to be notified when priority Analogue products are available')
 
     def __getMentionsFromCtx(self, ctx):
         if ctx is None:
