@@ -112,12 +112,8 @@ class CynanBotDiscord(commands.Bot):
 
         if utils.hasItems(roles):
             for role in roles:
-                permissions = role.permissions
-
-                if utils.hasItems(permissions):
-                    for permission in permissions:
-                        if permission.administrator:
-                            return True
+                if role.permissions.administrator:
+                    return True
 
         return False
 
