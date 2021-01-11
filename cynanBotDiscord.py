@@ -39,22 +39,33 @@ class CynanBotDiscord(commands.Bot):
         self.loop.create_task(self.__refreshAnalogueStoreAndWait())
 
     async def addUser(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
         await self.wait_until_ready()
 
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
         mentions = self.__getMentionsFromCtx(ctx)
-        discriminator = int(mentions[0].discriminator)
-        _id = int(mentions[0].id)
-        name = mentions[0].name
+        users = list()
 
-        user = self.__analogueSettingsHelper.addUserToUsersToNotify(
-            discriminator=discriminator,
-            _id=_id,
-            name=name
-        )
+        for mention in mentions:
+            discriminator = int(mention.discriminator)
+            _id = int(mention.id)
+            name = mention.name
 
-        if user is not None:
-            print(f'Added {user.toStr()} to users to notify ({utils.getNowTimeText()})')
-            await ctx.send(f'added `{user.getNameAndDiscriminator()}` to users to notify')
+            user = self.__analogueSettingsHelper.addUserToUsersToNotify(
+                discriminator=discriminator,
+                _id=_id,
+                name=name
+            )
+
+            users.append(f'`{user.getNameAndDiscriminator()}`')
+
+        usersString = ', '.join(users)
+        print(f'Added {usersString} to users to notify ({utils.getNowTimeText()})')
+        await ctx.send(f'added {usersString} to users to notify')
 
     async def __fetchAllMembers(self):
         await self.wait_until_ready()
@@ -93,11 +104,47 @@ class CynanBotDiscord(commands.Bot):
 
         return guild
 
+    def __isAuthorAdministrator(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        roles = ctx.author.roles
+
+        if utils.hasItems(roles):
+            for role in roles:
+                permissions = role.permissions
+
+                if utils.hasItems(permissions):
+                    for permission in permissions:
+                        if permission.administrator:
+                            return True
+
+        return False
+
+    def __getMentionsFromCtx(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        message = ctx.message
+
+        if message is None:
+            raise ValueError(f'ctx ({ctx}) message is malformed: \"{message}\"')
+
+        mentions = message.mentions
+
+        if not utils.hasItems(mentions):
+            raise ValueError(f'No users mentioned: ctx ({ctx}) message: \"{message}\"')
+
+        return mentions
+
     async def listPriorityProducts(self, ctx):
         if ctx is None:
             raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
 
         await self.wait_until_ready()
+
+        if not self.__isAuthorAdministrator(ctx):
+            return
 
         priorityStockProductTypes = self.__analogueSettingsHelper.getPriorityStockProductStrings()
 
@@ -118,6 +165,9 @@ class CynanBotDiscord(commands.Bot):
 
         await self.wait_until_ready()
 
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
         users = self.__analogueSettingsHelper.getUsersToNotify()
 
         if utils.hasItems(users):
@@ -131,22 +181,6 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
         else:
             await ctx.send('no users are set to be notified when priority Analogue products are available')
-
-    def __getMentionsFromCtx(self, ctx):
-        if ctx is None:
-            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
-
-        message = ctx.message
-
-        if message is None:
-            raise ValueError(f'ctx ({ctx}) message is malformed: \"{message}\"')
-
-        mentions = message.mentions
-
-        if not utils.hasItems(mentions):
-            raise ValueError(f'No users mentioned: ctx ({ctx}) message: \"{message}\"')
-
-        return mentions
 
     async def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self):
         storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
@@ -211,15 +245,26 @@ class CynanBotDiscord(commands.Bot):
             await asyncio.sleep(delaySeconds)
 
     async def removeUser(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
         await self.wait_until_ready()
 
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
         mentions = self.__getMentionsFromCtx(ctx)
-        _id = int(mentions[0].id)
+        users = list()
 
-        user = self.__analogueSettingsHelper.removeUserFromUsersToNotify(
-            _id=_id
-        )
+        for mention in mentions:
+            _id = int(mention.id)
 
-        if user is not None:
-            print(f'Removed {user.toStr()} from users to notify ({utils.getNowTimeText()})')
-            await ctx.send(f'removed `{user.getNameAndDiscriminator()}` from users to notify')
+            user = self.__analogueSettingsHelper.removeUserFromUsersToNotify(
+                _id=_id
+            )
+
+            users.append(f'`{user.getNameAndDiscriminator()}`')
+
+        usersString = ', '.join(users)
+        print(f'Removed {usersString} from users to notify ({utils.getNowTimeText()})')
+        await ctx.send(f'removed {usersString} from users to notify')
