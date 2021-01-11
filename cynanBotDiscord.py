@@ -173,7 +173,6 @@ class CynanBotDiscord(commands.Bot):
                 userNames.append(f'`{user.getNameAndDiscriminator()}`')
 
             userNamesString = ', '.join(userNames)
-
             await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
         else:
             await ctx.send('no users are set to be notified when priority Analogue products are available')

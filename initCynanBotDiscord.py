@@ -23,7 +23,7 @@ cynanBotDiscord = CynanBotDiscord(
 
 
 ###################################################################################################
-# CynanBotDiscord Commands                                                                        #
+# begin CynanBotDiscord Commands                                                                  #
 # More information on Discord bot commands available here:                                        #
 # https://discordpy.readthedocs.io/en/latest/ext/commands/commands.html                           #
 #                                                                                                 #
@@ -46,6 +46,10 @@ async def listUsers(ctx, *args):
 @cynanBotDiscord.command()
 async def removeUser(ctx, *args):
     await cynanBotDiscord.removeUser(ctx)
+
+###################################################################################################
+# end CynanBotDiscord commands                                                                    #
+###################################################################################################
 
 
 print('Starting CynanBotDiscord...')
