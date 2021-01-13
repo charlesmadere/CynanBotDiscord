@@ -59,18 +59,22 @@ class AnalogueSettingsHelper():
         productTypes = set()
 
         for productTypeString in self.getPriorityStockProductStrings():
-            if productTypeString.lower() == 'dac':
+            if 'dac' == productTypeString.lower():
                 productTypes.add(AnalogueProductType.DAC)
-            elif productTypeString.lower() == 'duo':
+            elif 'duo' == productTypeString.lower():
                 productTypes.add(AnalogueProductType.DUO)
-            elif productTypeString.lower() == 'mega sg':
+            elif 'mega sg' == productTypeString.lower():
                 productTypes.add(AnalogueProductType.MEGA_SG)
-            elif productTypeString.lower() == 'nt mini':
+            elif 'nt mini' == productTypeString.lower():
                 productTypes.add(AnalogueProductType.NT_MINI)
-            elif productTypeString.lower() == 'pocket':
+            elif 'pocket' == productTypeString.lower():
                 productTypes.add(AnalogueProductType.POCKET)
-            elif productTypeString.lower() == 'super nt':
+            elif 'super nt' == productTypeString.lower():
                 productTypes.add(AnalogueProductType.SUPER_NT)
+
+            # Intentionally not adding AnalogueProductType.OTHER to this set. It doesn't
+            # really make much sense for an OTHER product type to be something we consider to be a
+            # priority item that we're watching out for, since it could be basically anything.
 
         return productTypes
 
