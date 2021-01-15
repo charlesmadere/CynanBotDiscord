@@ -224,7 +224,7 @@ class CynanBotDiscord(commands.Bot):
         if utils.isValidStr(text):
             channel = self.__fetchChannel()
 
-            print(f'Sending Analogue stock message to channel \"{channel.name}\" ({utils.getNowTimeText}):\n{text}')
+            print(f'Sending Analogue stock message to channel \"{channel.name}\" ({utils.getNowTimeText(includeSeconds=True)}):\n{text}')
             await channel.send(text)
 
             # delay one day before next Analogue store refresh
