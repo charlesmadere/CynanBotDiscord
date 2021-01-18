@@ -4,7 +4,7 @@
         "Nt mini",
         "Super Nt"
     ],
-    "refreshEveryMinutes": 5,
+    "refreshEverySeconds": 1800,
     "usersToNotify": [
         {
             "discriminator": 1234,
