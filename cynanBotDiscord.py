@@ -67,6 +67,49 @@ class CynanBotDiscord(commands.Bot):
         print(f'Added {usersString} to users to notify ({utils.getNowTimeText()})')
         await ctx.send(f'added {usersString} to users to notify')
 
+    async def __createPriorityStockAvailableMessageText(self, storeStock: AnalogueStoreStock):
+        if storeStock is None:
+            raise ValueError(f'storeStock argument is malformed: \"{storeStock}\"')
+
+        storeEntries = storeStock.getProducts()
+        if not utils.hasItems(storeEntries):
+            return None
+
+        priorityStockProductTypes = self.__analogueSettingsHelper.getPriorityStockProductTypes()
+        if not utils.hasItems(priorityStockProductTypes):
+            return None
+
+        priorityEntriesInStock = list()
+        priorityProductTypesInStock = list()
+        for storeEntry in storeEntries:
+            if storeEntry.inStock() and storeEntry.getProductType() in priorityStockProductTypes:
+                priorityEntriesInStock.append(storeEntry)
+                priorityProductTypesInStock.append(storeEntry.getProductType())
+
+        if not utils.hasItems(priorityEntriesInStock) or not utils.hasItems(priorityProductTypesInStock):
+            return None
+
+        text = '**Priority items are in stock!**'
+
+        for storeEntry in priorityEntriesInStock:
+            text = f'{text}\n - {storeEntry.getName()}'
+
+        text = f'{text}\n<{self.__analogueStoreRepository.getStoreUrl()}>\n'
+
+        usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
+        if utils.hasItems(usersToNotify):
+            guild = self.__fetchGuild()
+
+            for user in usersToNotify:
+                guildMember = await guild.fetch_member(user.getId())
+
+                if guildMember is None:
+                    print(f'Unable to find user {user.toStr()} in guild {guild.name}')
+                else:
+                    text = f'{text}\n - {guildMember.mention}'
+
+        return text
+
     async def __fetchAllMembers(self):
         await self.wait_until_ready()
 
@@ -177,48 +220,13 @@ class CynanBotDiscord(commands.Bot):
         else:
             await ctx.send('no users are set to be notified when priority Analogue products are available')
 
-    async def __refreshAnalogueStoreAndCreatePriorityAvailableMessageText(self):
-        storeEntries = self.__analogueStoreRepository.fetchStoreStock().getProducts()
-        if not utils.hasItems(storeEntries):
-            return None
-
-        priorityStockProductTypes = self.__analogueSettingsHelper.getPriorityStockProductTypes()
-        if not utils.hasItems(priorityStockProductTypes):
-            return None
-
-        priorityEntriesInStock = list()
-        priorityProductTypesInStock = list()
-        for storeEntry in storeEntries:
-            if storeEntry.inStock() and storeEntry.getProductType() in priorityStockProductTypes:
-                priorityEntriesInStock.append(storeEntry)
-                priorityProductTypesInStock.append(storeEntry.getProductType())
-
-        if not utils.hasItems(priorityEntriesInStock) or not utils.hasItems(priorityProductTypesInStock):
-            return None
-
-        text = '**Priority items are in stock!**'
-
-        for storeEntry in priorityEntriesInStock:
-            text = f'{text}\n - {storeEntry.getName()}'
-
-        text = f'{text}\n<{self.__analogueStoreRepository.getStoreUrl()}>\n'
-
-        usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
-        if utils.hasItems(usersToNotify):
-            guild = self.__fetchGuild()
-
-            for user in usersToNotify:
-                guildMember = await guild.fetch_member(user.getId())
-
-                if guildMember is None:
-                    print(f'Unable to find user {user.toStr()} in guild {guild.name}')
-                else:
-                    text = f'{text}\n - {guildMember.mention}'
-
-        return text
-
     async def __refreshAnalogueStore(self):
-        text = await self.__refreshAnalogueStoreAndCreatePriorityAvailableMessageText()
+        storeStock = await self.__analogueStoreRepository.fetchStoreStock()
+
+        text = None
+        if storeStock is not None:
+            text = await self.__createPriorityStockAvailableMessageText(storeStock)
+
         delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
 
         if utils.isValidStr(text):
