@@ -221,7 +221,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('no users are set to be notified when priority Analogue products are available')
 
     async def __refreshAnalogueStore(self):
-        storeStock = await self.__analogueStoreRepository.fetchStoreStock()
+        storeStock = self.__analogueStoreRepository.fetchStoreStock()
 
         text = None
         if storeStock is not None:
