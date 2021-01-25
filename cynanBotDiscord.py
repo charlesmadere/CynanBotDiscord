@@ -222,6 +222,10 @@ class CynanBotDiscord(commands.Bot):
 
             # delay one day before next Analogue store refresh
             delaySeconds = 60 * 60 * 24
+        elif storeStock is None:
+            # An error must have occurred when fetching Analogue's store stock, so let's delay a
+            # little bit longer before the next refresh attempt.
+            delaySeconds = 2 * delaySeconds
 
         return delaySeconds
 
