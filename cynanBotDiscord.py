@@ -110,21 +110,6 @@ class CynanBotDiscord(commands.Bot):
 
         return text
 
-    async def __fetchAllMembers(self):
-        await self.wait_until_ready()
-
-        guild = self.__fetchGuild()
-
-        members = await guild.fetch_members(limit=None)
-        if members is None:
-            raise ValueError(f'Guild \"{guild.name}\" failed to fetch members')
-
-        membersList = members.flatten()
-        if not utils.hasItems(membersList):
-            raise ValueError(f'Guild \"{guild.name}\" has no members')
-
-        return membersList
-
     async def __fetchChannel(self):
         await self.wait_until_ready()
 
