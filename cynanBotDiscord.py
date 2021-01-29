@@ -5,6 +5,7 @@ import time
 import discord
 import nest_asyncio
 from discord.ext import commands
+from discord.ext.commands import CommandNotFound
 
 import CynanBotCommon.utils as utils
 from analogueSettingsHelper import AnalogueSettingsHelper, AnalogueUserToNotify
@@ -33,6 +34,12 @@ class CynanBotDiscord(commands.Bot):
 
         self.__analogueSettingsHelper = analogueSettingsHelper
         self.__analogueStoreRepository = analogueStoreRepository
+
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, CommandNotFound):
+            return
+        else:
+            raise error
 
     async def on_ready(self):
         print(f'{self.user} is ready!')
