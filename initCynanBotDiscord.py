@@ -1,7 +1,5 @@
-import os
 from datetime import timedelta
 
-import discord
 from discord.ext import commands
 
 from analogueSettingsHelper import AnalogueSettingsHelper
@@ -12,13 +10,13 @@ from discordAuthHelper import DiscordAuthHelper
 
 analogueSettingsHelper = AnalogueSettingsHelper()
 analogueStoreRepository = AnalogueStoreRepository(
-    cacheTimeDelta=timedelta(seconds=30)
+    cacheTimeDelta = timedelta(seconds=30)
 )
 discordAuthHelper = DiscordAuthHelper()
 
 cynanBotDiscord = CynanBotDiscord(
-    analogueSettingsHelper=analogueSettingsHelper,
-    analogueStoreRepository=analogueStoreRepository
+    analogueSettingsHelper = analogueSettingsHelper,
+    analogueStoreRepository = analogueStoreRepository
 )
 
 

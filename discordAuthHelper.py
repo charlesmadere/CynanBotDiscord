@@ -31,5 +31,5 @@ class DiscordAuthHelper():
             raise ValueError(f'Discord auth file \"{discordAuthFile}\" has malformed token: \"{token}\"')
         self.__token = token
 
-    def getToken(self):
+    def getToken(self) -> str:
         return self.__token

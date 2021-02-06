@@ -1,8 +1,51 @@
 import json
 import os
+from typing import Iterable
 
 import CynanBotCommon.utils as utils
 from CynanBotCommon.analogueStoreRepository import AnalogueProductType
+
+
+class AnalogueUserToNotify():
+
+    def __init__(
+        self,
+        discriminator: int,
+        _id: int,
+        name: str
+    ):
+        if not utils.isValidNum(discriminator):
+            raise ValueError(f'discriminator argument is malformed: {discriminator}')
+        elif not utils.isValidNum(_id):
+            raise ValueError(f'_id argument is malformed: \"{_id}\"')
+        elif not utils.isValidStr(name):
+            raise ValueError(f'name argument is malformed: \"{name}\"')
+
+        self.__discriminator = discriminator
+        self.__id = _id
+        self.__name = name
+
+    def getDiscriminator(self) -> int: 
+        return self.__discriminator
+
+    def getId(self) -> str:
+        return self.__id
+
+    def getName(self) -> str:
+        return self.__name
+
+    def getNameAndDiscriminator(self) -> str:
+        return f'{self.__name}#{self.__discriminator}'
+
+    def toJsonDict(self) -> dict:
+        return {
+            'discriminator': self.__discriminator,
+            'id': self.__id,
+            'name': self.__name
+        }
+
+    def toStr(self) -> str:
+        return f'{self.getNameAndDiscriminator()} ({self.__id})'
 
 
 class AnalogueSettingsHelper():
@@ -18,7 +61,7 @@ class AnalogueSettingsHelper():
         discriminator: int,
         _id: int,
         name: str
-    ):
+    ) -> AnalogueUserToNotify:
         if not utils.isValidNum(discriminator):
             raise ValueError(f'discriminator argument is malformed: \"{discriminator}\"')
         elif not utils.isValidNum(_id):
@@ -30,9 +73,9 @@ class AnalogueSettingsHelper():
         add = True
 
         user = AnalogueUserToNotify(
-            discriminator=discriminator,
-            _id=_id,
-            name=name
+            discriminator = discriminator,
+            _id = _id,
+            name = name
         )
 
         for userJson in jsonContents['usersToNotify']:
@@ -47,15 +90,15 @@ class AnalogueSettingsHelper():
         jsonContents['usersToNotify'].sort(key=lambda x: x['name'].lower())
 
         with open(self.__analogueSettingsFile, 'w') as file:
-            json.dump(jsonContents, file, indent=4, sort_keys=True)
+            json.dump(jsonContents, file, indent = 4, sort_keys = True)
 
         return user
 
-    def getChannelId(self):
+    def getChannelId(self) -> str:
         jsonContents = self.__readJson()
         return utils.getIntFromDict(jsonContents, 'channelId')
 
-    def getPriorityStockProductTypes(self):
+    def getPriorityStockProductTypes(self) -> Iterable[AnalogueProductType]:
         productTypes = set()
 
         for productTypeString in self.getPriorityStockProductStrings():
@@ -78,11 +121,11 @@ class AnalogueSettingsHelper():
 
         return productTypes
 
-    def getPriorityStockProductStrings(self):
+    def getPriorityStockProductStrings(self) -> Iterable[str]:
         jsonContents = self.__readJson()
         return jsonContents['priorityStockProductTypes']
 
-    def getRefreshEverySeconds(self):
+    def getRefreshEverySeconds(self) -> int:
         jsonContents = self.__readJson()
         refreshEverySeconds = utils.getIntFromDict(jsonContents, 'refreshEverySeconds')
 
@@ -91,7 +134,7 @@ class AnalogueSettingsHelper():
 
         return refreshEverySeconds
 
-    def getUsersToNotify(self):
+    def getUsersToNotify(self) -> Iterable[AnalogueUserToNotify]:
         jsonContents = self.__readJson()
         users = list()
 
@@ -104,7 +147,7 @@ class AnalogueSettingsHelper():
 
         return users
 
-    def __readJson(self):        
+    def __readJson(self) -> dict:
         if not os.path.exists(self.__analogueSettingsFile):
             raise FileNotFoundError(f'Analogue settings file not found: \"{self.__analogueSettingsFile}\"')
 
@@ -118,7 +161,7 @@ class AnalogueSettingsHelper():
 
         return jsonContents
 
-    def removeUserFromUsersToNotify(self, _id: int):
+    def removeUserFromUsersToNotify(self, _id: int) -> AnalogueUserToNotify:
         if not utils.isValidNum(_id):
             raise ValueError(f'_id argument is malformed: \"{_id}\"')
 
@@ -130,57 +173,15 @@ class AnalogueSettingsHelper():
 
             if userId == _id:
                 user = AnalogueUserToNotify(
-                    discriminator=userJson['discriminator'],
-                    _id=userId,
-                    name=userJson['name']
+                    discriminator = userJson['discriminator'],
+                    _id = userId,
+                    name = userJson['name']
                 )
 
                 jsonContents['usersToNotify'].remove(userJson)
                 break
 
         with open(self.__analogueSettingsFile, 'w') as file:
-            json.dump(jsonContents, file, indent=4, sort_keys=True)
+            json.dump(jsonContents, file, indent = 4, sort_keys = True)
 
         return user
-
-
-class AnalogueUserToNotify():
-
-    def __init__(
-        self,
-        discriminator: int,
-        _id: int,
-        name: str
-    ):
-        if not utils.isValidNum(discriminator):
-            raise ValueError(f'discriminator argument is malformed: {discriminator}')
-        elif not utils.isValidNum(_id):
-            raise ValueError(f'_id argument is malformed: \"{_id}\"')
-        elif not utils.isValidStr(name):
-            raise ValueError(f'name argument is malformed: \"{name}\"')
-
-        self.__discriminator = discriminator
-        self.__id = _id
-        self.__name = name
-
-    def getDiscriminator(self): 
-        return self.__discriminator
-
-    def getId(self):
-        return self.__id
-
-    def getName(self):
-        return self.__name
-
-    def getNameAndDiscriminator(self):
-        return f'{self.__name}#{self.__discriminator}'
-
-    def toJsonDict(self):
-        return {
-            'discriminator': self.__discriminator,
-            'id': self.__id,
-            'name': self.__name
-        }
-
-    def toStr(self):
-        return f'{self.getNameAndDiscriminator()} ({self.__id})'
