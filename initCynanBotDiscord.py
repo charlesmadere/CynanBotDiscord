@@ -36,6 +36,10 @@ async def addUser(ctx, *args):
     await cynanBotDiscord.addUser(ctx)
 
 @cynanBotDiscord.command()
+async def analogue(ctx, *args):
+    await cynanBotDiscord.analogue(ctx)
+
+@cynanBotDiscord.command()
 async def listPriorityProducts(ctx, *args):
     await cynanBotDiscord.listPriorityProducts(ctx)
 

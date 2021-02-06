@@ -1,16 +1,13 @@
 import asyncio
-import sched
-import time
+from datetime import datetime, timedelta
 
 import discord
-import nest_asyncio
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 
 import CynanBotCommon.utils as utils
-from analogueSettingsHelper import AnalogueSettingsHelper, AnalogueUserToNotify
-from CynanBotCommon.analogueStoreRepository import (AnalogueStoreEntry,
-                                                    AnalogueStoreRepository,
+from analogueSettingsHelper import AnalogueSettingsHelper
+from CynanBotCommon.analogueStoreRepository import (AnalogueStoreRepository,
                                                     AnalogueStoreStock)
 
 
@@ -34,6 +31,8 @@ class CynanBotDiscord(commands.Bot):
 
         self.__analogueSettingsHelper = analogueSettingsHelper
         self.__analogueStoreRepository = analogueStoreRepository
+        self.__analogueMessageCoolDown = timedelta(minutes=5)
+        self.__lastAnalogueMessageTime = datetime.now() - self.__analogueMessageCoolDown
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, CommandNotFound):
@@ -73,6 +72,30 @@ class CynanBotDiscord(commands.Bot):
         usersString = ', '.join(users)
         print(f'Added {usersString} to users to notify ({utils.getNowTimeText()})')
         await ctx.send(f'added {usersString} to users to notify')
+
+    async def analogue(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        now = datetime.now()
+        if now - self.__analogueMessageCoolDown <= self.__lastAnalogueMessageTime:
+            return
+
+        self.__lastAnalogueMessageTime = now
+
+        try:
+            result = self.__analogueStoreRepository.fetchStoreStock()
+
+            if result is None:
+                print(f'Error fetching Analogue stock')
+                await ctx.send('⚠ Error fetching Analogue stock')
+            else:
+                await ctx.send(result.toStr(includePrices=True))
+        except ValueError:
+            print(f'Error fetching Analogue stock')
+            await ctx.send('⚠ Error fetching Analogue stock')
 
     async def __createPriorityStockAvailableMessageText(self, storeStock: AnalogueStoreStock):
         if storeStock is None:
