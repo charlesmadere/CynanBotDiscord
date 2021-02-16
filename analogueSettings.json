@@ -1,5 +1,7 @@
 {
-    "channelId": 1234567890,
+    "channelIds": [
+        1234567890
+    ],
     "priorityStockProductTypes": [
         "Nt mini",
         "Super Nt"

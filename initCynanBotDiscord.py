@@ -4,7 +4,9 @@ from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import AnalogueStoreRepository
 from cynanBotDiscord import CynanBotDiscord
+from generalSettingsHelper import GeneralSettingsHelper
 from twitchAccounceSettingsHelper import TwitchAnnounceSettingsHelper
+from twitchLiveHelper import TwitchLiveHelper
 
 
 analogueSettingsHelper = AnalogueSettingsHelper()
@@ -16,7 +18,9 @@ cynanBotDiscord = CynanBotDiscord(
         cacheTimeDelta = timedelta(analogueSettingsHelper.getAnalogueStoreCacheSeconds())
     ),
     authHelper = authHelper,
-    twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper()
+    generalSettingsHelper = GeneralSettingsHelper(),
+    twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper(),
+    twitchLiveHelper = TwitchLiveHelper()
 )
 
 ###################################################################################################

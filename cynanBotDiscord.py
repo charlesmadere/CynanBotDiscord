@@ -10,7 +10,10 @@ from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import (AnalogueStoreRepository,
                                                     AnalogueStoreStock)
+from CynanBotCommon.timedDict import TimedDict
+from generalSettingsHelper import GeneralSettingsHelper
 from twitchAccounceSettingsHelper import TwitchAnnounceSettingsHelper
+from twitchLiveHelper import TwitchLiveHelper
 
 
 class CynanBotDiscord(commands.Bot):
@@ -20,7 +23,9 @@ class CynanBotDiscord(commands.Bot):
         analogueSettingsHelper: AnalogueSettingsHelper,
         analogueStoreRepository: AnalogueStoreRepository,
         authHelper: AuthHelper,
-        twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper
+        generalSettingsHelper: GeneralSettingsHelper,
+        twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper,
+        twitchLiveHelper: TwitchLiveHelper
     ):
         super().__init__(
             command_prefix = '!',
@@ -34,16 +39,23 @@ class CynanBotDiscord(commands.Bot):
             raise ValueError(f'analogueStoreRepository argument is malformed: \"{analogueStoreRepository}\"')
         elif authHelper is None:
             raise ValueError(f'authHelper argument is malformed: \"{authHelper}\"')
+        elif generalSettingsHelper is None:
+            raise ValueError(f'generalSettingsHelper argument is malformed: \"{generalSettingsHelper}\"')
         elif twitchAnnounceSettingsHelper is None:
             raise ValueError(f'twitchAnnounceSttingsHelper argument is malformed: \"{twitchAnnounceSettingsHelper}\"')
+        elif twitchLiveHelper is None:
+            raise ValueError(f'twitchLiveHelper argument is malformed: \"{twitchLiveHelper}\"')
 
         self.__analogueSettingsHelper = analogueSettingsHelper
         self.__analogueStoreRepository = analogueStoreRepository
         self.__authHelper = authHelper
+        self.__generalSettingsHelper = generalSettingsHelper
         self.__twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
+        self.__twitchLiveHelper = twitchLiveHelper
 
         self.__analogueMessageCoolDown = timedelta(minutes = 5)
         self.__lastAnalogueMessageTime = datetime.now() - self.__analogueMessageCoolDown
+        self.__liveTwitchUsers = TimedDict(timedelta(minutes = 15))
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, CommandNotFound):
@@ -73,9 +85,9 @@ class CynanBotDiscord(commands.Bot):
             name = mention.name
 
             user = self.__analogueSettingsHelper.addUserToUsersToNotify(
-                discriminator=discriminator,
-                _id=_id,
-                name=name
+                discriminator = discriminator,
+                _id = _id,
+                name = name
             )
 
             users.append(f'`{user.getNameAndDiscriminator()}`')
@@ -103,9 +115,70 @@ class CynanBotDiscord(commands.Bot):
             print(f'Error fetching Analogue stock: {e}')
             await ctx.send('⚠ Error fetching Analogue stock')
 
-    async def __createPriorityStockAvailableMessageText(self, storeStock: AnalogueStoreStock):
+    async def __checkAnalogueStoreStock(self):
+        # TODO return if it's too early to check for stock again
+
+        channelIds = self.__analogueSettingsHelper.getChannelIds()
+
+        if not utils.hasItems(channelIds):
+            return
+
+        storeStock = self.__analogueStoreRepository.fetchStoreStock()
+
+        text = None
+        if storeStock is not None:
+            text = await self.__createPriorityStockAvailableMessageText(storeStock)
+
+        if utils.isValidStr(text):
+            print(f'Sending Analogue stock message ({utils.getNowTimeText(includeSeconds = True)}):\n{text}')
+
+            for channelId in channelIds:
+                channel = self.__fetchChannel(channelId)
+                await channel.send(text)
+
+    async def __checkTwitchStreams(self):
+        # TODO return if it's too early for another announce
+
+        twitchAnnounceUsers = self.__twitchAnnounceSettingsHelper.getAllTwitchAnnounceUsers()
+
+        if not utils.hasItems(twitchAnnounceUsers):
+            return
+
+        liveTwitchUsers = list()
+
+        for twitchAnnounceUser in twitchAnnounceUsers:
+            if self.__twitchLiveHelper.isLive(twitchAnnounceUser):
+                liveTwitchUsers.append(twitchAnnounceUser)
+
+        if not utils.hasItems(liveTwitchUsers):
+            return
+
+        now = datetime.now()
+        for liveTwitchUser in liveTwitchUsers:
+            self.__liveTwitchUsers[liveTwitchUser.getTwitchName().lower()] = now
+
+        for liveTwitchUser in liveTwitchUsers:
+            twitchAnnounceServers = self.__twitchAnnounceSettingsHelper.getTwitchAnnounceServersForUser(
+                discordUserId = liveTwitchUser.getDiscordId()
+            )
+
+            if not utils.hasItems(twitchAnnounceServers):
+                continue
+
+            for twitchAnnounceServer in twitchAnnounceServers:
+                channel = self.__fetchChannel(twitchAnnounceServer.getDiscordChannelId())
+                await channel.send(f'')
+                # TODO send live message to channel
+
+    async def __createPriorityStockAvailableMessageText(
+        self,
+        storeStock: AnalogueStoreStock,
+        channelId: int
+    ):
         if storeStock is None:
             raise ValueError(f'storeStock argument is malformed: \"{storeStock}\"')
+        elif not utils.isValidNum(channelId):
+            raise ValueError(f'channelId argument is malformed: \"{channelId}\"')
 
         storeEntries = storeStock.getProducts()
         if not utils.hasItems(storeEntries):
@@ -134,22 +207,21 @@ class CynanBotDiscord(commands.Bot):
 
         usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
         if utils.hasItems(usersToNotify):
-            guild = self.__fetchGuild()
+            guild = self.__fetchGuild(channelId)
 
             for user in usersToNotify:
                 guildMember = await guild.fetch_member(user.getId())
 
-                if guildMember is None:
-                    print(f'Unable to find user {user.toStr()} in guild {guild.name}')
-                else:
+                if guildMember is not None:
                     text = f'{text}\n - {guildMember.mention}'
 
         return text
 
-    async def __fetchChannel(self):
-        await self.wait_until_ready()
+    async def __fetchChannel(self, channelId: int):
+        if not utils.isValidNum(channelId):
+            raise ValueError(f'channelId argument is malformed: \"{channelId}\"')
 
-        channelId = self.__analogueSettingsHelper.getChannelId()
+        await self.wait_until_ready()
         channel = await self.fetch_channel(channelId)
 
         if channel is None:
@@ -157,10 +229,13 @@ class CynanBotDiscord(commands.Bot):
 
         return channel
 
-    async def __fetchGuild(self):
+    async def __fetchGuild(self, channelId: int):
+        if not utils.isValidNum(channelId):
+            raise ValueError(f'channelId argument is malformed: \"{channelId}\"')
+
         await self.wait_until_ready()
 
-        channel = self.__fetchChannel()
+        channel = self.__fetchChannel(channelId)
         guild = channel.guild
 
         if guild is None:
@@ -241,35 +316,13 @@ class CynanBotDiscord(commands.Bot):
         else:
             await ctx.send('no users are set to be notified when priority Analogue products are available')
 
-    async def __refreshAnalogueStore(self):
-        storeStock = self.__analogueStoreRepository.fetchStoreStock()
-
-        text = None
-        if storeStock is not None:
-            text = await self.__createPriorityStockAvailableMessageText(storeStock)
-
-        delaySeconds = self.__analogueSettingsHelper.getRefreshEverySeconds()
-
-        if utils.isValidStr(text):
-            channel = self.__fetchChannel()
-
-            print(f'Sending Analogue stock message to channel \"{channel.name}\" ({utils.getNowTimeText(includeSeconds = True)}):\n{text}')
-            await channel.send(text)
-
-            delaySeconds = self.__analogueSettingsHelper.getRefreshDelayAfterPriorityStockFoundSeconds()
-        elif storeStock is None:
-            # An error must have occurred when fetching Analogue's store stock, so let's delay a
-            # little bit longer before the next refresh attempt.
-            delaySeconds = 2 * delaySeconds
-
-        return delaySeconds
-
     async def __refreshAnalogueStoreAndWait(self):
         await self.wait_until_ready()
 
         while not self.is_closed():
-            delaySeconds = await self.__refreshAnalogueStore()
-            await asyncio.sleep(delaySeconds)
+            await self.__checkAnalogueStoreStock()
+            await self.__checkTwitchStreams()
+            await asyncio.sleep(self.__generalSettingsHelper.getRefreshEverySeconds())
 
     async def removeUser(self, ctx):
         if ctx is None:

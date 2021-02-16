@@ -1,13 +1,9 @@
 {
     "refreshEverySeconds": 300,
+    "twitchAnnounceServers": {
+
+    },
     "twitchAnnounceUsers": {
-        "123456789": [
-            11110000,
-            10101010
-        ],
-        "98765321": [
-            10101010,
-            11110000
-        ]
+
     }
 }

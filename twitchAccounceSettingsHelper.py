@@ -9,23 +9,22 @@ class TwitchAnnounceServer():
 
     def __init__(
         self,
-        channelId: int,
-        discordIds: List[int]
+        discordChannelId: int,
+        discordUserIds: List[int]
     ):
-        if not utils.isValidNum(channelId):
-            raise ValueError(f'channelId argument is malformed: \"{channelId}\"')
+        if not utils.isValidNum(discordChannelId):
+            raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
+        elif not utils.hasItems(discordUserIds):
+            raise ValueError(f'discordUserIds argument is malformed: \"{discordUserIds}\"')
 
-        self.__channelId = channelId
-        self.__discordIds = discordIds
+        self.__discordChannelId = discordChannelId
+        self.__discordUserIds = discordUserIds
 
-    def getChannelId(self) -> int:
-        return self.__channelId
+    def getDiscordChannelId(self) -> int:
+        return self.__discordChannelId
 
-    def getDiscordIds(self) -> List[int]:
-        return self.__discordIds
-
-    def hasDiscordIds(self) -> bool:
-        return utils.hasItems(self.__discordIds)
+    def getDiscordUserIds(self) -> List[int]:
+        return self.__discordUserIds
 
 
 class TwitchAnnounceUser():
@@ -154,45 +153,31 @@ class TwitchAnnounceSettingsHelper():
 
         return refreshEverySeconds
 
-    def getTwitchAnnounceUsersForChannel(self, channelId: int) -> List[TwitchAnnounceUser]:
-        if not utils.isValidNum(channelId):
-            raise ValueError(f'channelId argument is malformed: \"{channelId}\"')
+    def getTwitchAnnounceServersForUser(self, discordUserId: int) -> List[TwitchAnnounceUser]:
+        if not utils.isValidNum(discordUserId):
+            raise ValueError(f'discordUserId argument is malformed: \"{discordUserId}\"')
 
         jsonContents = self.__readJson()
-        twitchAnnounceServers = jsonContents['twitchAnnounceServers']
+        serversJson = jsonContents.get('twitchAnnounceServers')
+
+        if not utils.hasItems(serversJson):
+            raise RuntimeError(f'The \"twitchAnnounceServers\" field is either empty or missing in \"{self.__twitchAnnounceSettingsFile}\"')
+
+        twitchAnnounceServers = list()
+
+        for serverJson in serversJson:
+            discordUserIds = serverJson['discordUserIds']
+
+            if discordUserId in discordUserIds:
+                twitchAnnounceServers.append(TwitchAnnounceServer(
+                    discordChannelId = utils.getIntFromDict(serverJson, 'discordChannelId'),
+                    discordUserIds = discordUserIds
+                ))
 
         if not utils.hasItems(twitchAnnounceServers):
-            return None
+            print(f'Unable to find any TwitchAnnounceServer for discord user ID \"{discordUserId}\" in \"{self.__twitchAnnounceSettingsFile}\"')
 
-        channelIdStr = str(channelId)
-        twitchAnnounceUserIds = None
-
-        for twitchAnnounceChannelId in twitchAnnounceServers:
-            twitchAnnounceChannelIdStr = str(twitchAnnounceChannelId)
-
-            if twitchAnnounceChannelIdStr.lower() == channelIdStr.lower():
-                twitchAnnounceUserIds = twitchAnnounceServers[twitchAnnounceChannelIdStr]
-                break
-
-        if not utils.hasItems(twitchAnnounceUserIds):
-            return None
-
-        twitchAnnounceUsers = list()
-        twitchAnnounceUsersJson = jsonContents['twitchAnnounceUsers']
-
-        for userJson in twitchAnnounceUsersJson:
-            userId = utils.getIntFromDict(userJson, 'discordId')
-
-            if userId in twitchAnnounceUserIds:
-                twitchAnnounceUsers.append(TwitchAnnounceUser(
-                    discordDiscriminator = utils.getIntFromDict(userJson, 'discordDiscriminator'),
-                    discordId = userId,
-                    discordName = userJson['discordName'],
-                    twitchName = userJson['twitchName']
-                ))
-                
-
-        return twitchAnnounceUsers
+        return twitchAnnounceServers
 
     def __readJson(self) -> dict:
         if not os.path.exists(self.__twitchAnnounceSettingsFile):

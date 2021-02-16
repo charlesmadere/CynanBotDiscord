@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Iterable
+from typing import Iterable, List
 
 import CynanBotCommon.utils as utils
 from CynanBotCommon.analogueStoreRepository import AnalogueProductType
@@ -106,9 +106,9 @@ class AnalogueSettingsHelper():
 
         return analogueStoreCacheSeconds
 
-    def getChannelId(self) -> int:
+    def getChannelIds(self) -> List[int]:
         jsonContents = self.__readJson()
-        return utils.getIntFromDict(jsonContents, 'channelId')
+        return jsonContents['channelIds']
 
     def getPriorityStockProductTypes(self) -> Iterable[AnalogueProductType]:
         productTypes = set()
