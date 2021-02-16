@@ -7,8 +7,10 @@ from discord.ext.commands import CommandNotFound
 
 import CynanBotCommon.utils as utils
 from analogueSettingsHelper import AnalogueSettingsHelper
+from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import (AnalogueStoreRepository,
                                                     AnalogueStoreStock)
+from twitchAccounceSettingsHelper import TwitchAnnounceSettingsHelper
 
 
 class CynanBotDiscord(commands.Bot):
@@ -16,22 +18,31 @@ class CynanBotDiscord(commands.Bot):
     def __init__(
         self,
         analogueSettingsHelper: AnalogueSettingsHelper,
-        analogueStoreRepository: AnalogueStoreRepository
+        analogueStoreRepository: AnalogueStoreRepository,
+        authHelper: AuthHelper,
+        twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper
     ):
         super().__init__(
-            command_prefix='!',
-            intents=discord.Intents.default(),
-            status=discord.Status.online
+            command_prefix = '!',
+            intents = discord.Intents.default(),
+            status = discord.Status.online
         )
 
         if analogueSettingsHelper is None:
             raise ValueError(f'analogueSettingsHelper argument is malformed: \"{analogueSettingsHelper}\"')
         elif analogueStoreRepository is None:
             raise ValueError(f'analogueStoreRepository argument is malformed: \"{analogueStoreRepository}\"')
+        elif authHelper is None:
+            raise ValueError(f'authHelper argument is malformed: \"{authHelper}\"')
+        elif twitchAnnounceSettingsHelper is None:
+            raise ValueError(f'twitchAnnounceSttingsHelper argument is malformed: \"{twitchAnnounceSettingsHelper}\"')
 
         self.__analogueSettingsHelper = analogueSettingsHelper
         self.__analogueStoreRepository = analogueStoreRepository
-        self.__analogueMessageCoolDown = timedelta(minutes=5)
+        self.__authHelper = authHelper
+        self.__twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
+
+        self.__analogueMessageCoolDown = timedelta(minutes = 5)
         self.__lastAnalogueMessageTime = datetime.now() - self.__analogueMessageCoolDown
 
     async def on_command_error(self, ctx, error):
@@ -87,14 +98,9 @@ class CynanBotDiscord(commands.Bot):
 
         try:
             result = self.__analogueStoreRepository.fetchStoreStock()
-
-            if result is None:
-                print(f'Error fetching Analogue stock')
-                await ctx.send('⚠ Error fetching Analogue stock')
-            else:
-                await ctx.send(result.toStr(includePrices=True))
-        except ValueError:
-            print(f'Error fetching Analogue stock')
+            await ctx.send(result.toStr(includePrices = True))
+        except (RuntimeError, ValueError) as e:
+            print(f'Error fetching Analogue stock: {e}')
             await ctx.send('⚠ Error fetching Analogue stock')
 
     async def __createPriorityStockAvailableMessageText(self, storeStock: AnalogueStoreStock):
@@ -162,19 +168,6 @@ class CynanBotDiscord(commands.Bot):
 
         return guild
 
-    def __isAuthorAdministrator(self, ctx):
-        if ctx is None:
-            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
-
-        roles = ctx.author.roles
-
-        if utils.hasItems(roles):
-            for role in roles:
-                if role.permissions.administrator:
-                    return True
-
-        return False
-
     def __getMentionsFromCtx(self, ctx):
         if ctx is None:
             raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
@@ -190,6 +183,19 @@ class CynanBotDiscord(commands.Bot):
             raise ValueError(f'No users mentioned: ctx ({ctx}) message: \"{message}\"')
 
         return mentions
+
+    def __isAuthorAdministrator(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        roles = ctx.author.roles
+
+        if utils.hasItems(roles):
+            for role in roles:
+                if role.permissions.administrator:
+                    return True
+
+        return False
 
     async def listPriorityProducts(self, ctx):
         if ctx is None:
@@ -247,11 +253,10 @@ class CynanBotDiscord(commands.Bot):
         if utils.isValidStr(text):
             channel = self.__fetchChannel()
 
-            print(f'Sending Analogue stock message to channel \"{channel.name}\" ({utils.getNowTimeText(includeSeconds=True)}):\n{text}')
+            print(f'Sending Analogue stock message to channel \"{channel.name}\" ({utils.getNowTimeText(includeSeconds = True)}):\n{text}')
             await channel.send(text)
 
-            # delay one day before next Analogue store refresh
-            delaySeconds = 60 * 60 * 24
+            delaySeconds = self.__analogueSettingsHelper.getRefreshDelayAfterPriorityStockFoundSeconds()
         elif storeStock is None:
             # An error must have occurred when fetching Analogue's store stock, so let's delay a
             # little bit longer before the next refresh attempt.
@@ -280,12 +285,10 @@ class CynanBotDiscord(commands.Bot):
 
         for mention in mentions:
             _id = int(mention.id)
+            user = self.__analogueSettingsHelper.removeUserFromUsersToNotify(_id)
 
-            user = self.__analogueSettingsHelper.removeUserFromUsersToNotify(
-                _id=_id
-            )
-
-            users.append(f'`{user.getNameAndDiscriminator()}`')
+            if user is not None:
+                users.append(f'`{user.getNameAndDiscriminator()}`')
 
         usersString = ', '.join(users)
         print(f'Removed {usersString} from users to notify ({utils.getNowTimeText()})')

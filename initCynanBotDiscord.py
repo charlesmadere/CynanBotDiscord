@@ -1,24 +1,23 @@
 from datetime import timedelta
 
-from discord.ext import commands
-
 from analogueSettingsHelper import AnalogueSettingsHelper
+from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import AnalogueStoreRepository
 from cynanBotDiscord import CynanBotDiscord
-from discordAuthHelper import DiscordAuthHelper
+from twitchAccounceSettingsHelper import TwitchAnnounceSettingsHelper
 
 
 analogueSettingsHelper = AnalogueSettingsHelper()
-analogueStoreRepository = AnalogueStoreRepository(
-    cacheTimeDelta = timedelta(seconds=30)
-)
-discordAuthHelper = DiscordAuthHelper()
+authHelper = AuthHelper()
 
 cynanBotDiscord = CynanBotDiscord(
-    analogueSettingsHelper = analogueSettingsHelper,
-    analogueStoreRepository = analogueStoreRepository
+    analogueSettingsHelper = AnalogueSettingsHelper(),
+    analogueStoreRepository = AnalogueStoreRepository(
+        cacheTimeDelta = timedelta(analogueSettingsHelper.getAnalogueStoreCacheSeconds())
+    ),
+    authHelper = authHelper,
+    twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper()
 )
-
 
 ###################################################################################################
 # begin CynanBotDiscord Commands                                                                  #
@@ -55,4 +54,4 @@ async def removeUser(ctx, *args):
 
 
 print('Starting CynanBotDiscord...')
-cynanBotDiscord.run(discordAuthHelper.getToken())
+cynanBotDiscord.run(authHelper.getToken())

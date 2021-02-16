@@ -50,7 +50,10 @@ class AnalogueUserToNotify():
 
 class AnalogueSettingsHelper():
 
-    def __init__(self, analogueSettingsFile: str = 'analogueSettings.json'):
+    def __init__(
+        self,
+        analogueSettingsFile: str = 'analogueSettings.json'
+    ):
         if not utils.isValidStr(analogueSettingsFile):
             raise ValueError(f'analogueSettingsFile argument is malformed: \"{analogueSettingsFile}\"')
 
@@ -87,14 +90,23 @@ class AnalogueSettingsHelper():
         if add:
             jsonContents['usersToNotify'].append(user.toJsonDict())
 
-        jsonContents['usersToNotify'].sort(key=lambda x: x['name'].lower())
+        jsonContents['usersToNotify'].sort(key = lambda x: x['name'].lower())
 
         with open(self.__analogueSettingsFile, 'w') as file:
             json.dump(jsonContents, file, indent = 4, sort_keys = True)
 
         return user
 
-    def getChannelId(self) -> str:
+    def getAnalogueStoreCacheSeconds(self) -> int:
+        refreshEverySeconds = self.getRefreshEverySeconds()
+        analogueStoreCacheSeconds = int(round(refreshEverySeconds / 2))
+
+        if analogueStoreCacheSeconds < 30:
+            raise ValueError(f'Analogue store cache seconds is too aggressive: {analogueStoreCacheSeconds} (\"refreshEverySeconds\": {refreshEverySeconds})')
+
+        return analogueStoreCacheSeconds
+
+    def getChannelId(self) -> int:
         jsonContents = self.__readJson()
         return utils.getIntFromDict(jsonContents, 'channelId')
 
@@ -125,12 +137,22 @@ class AnalogueSettingsHelper():
         jsonContents = self.__readJson()
         return jsonContents['priorityStockProductTypes']
 
+    def getRefreshDelayAfterPriorityStockFoundSeconds(self) -> int:
+        jsonContents = self.__readJson()
+        refreshEverySeconds = utils.getIntFromDict(jsonContents, 'refreshEverySeconds')
+        refreshDelayAfterPriorityStockFoundSeconds = utils.getIntFromDict(jsonContents, 'refreshDelayAfterPriorityStockFoundSeconds')
+
+        if refreshDelayAfterPriorityStockFoundSeconds <= refreshEverySeconds:
+            raise ValueError(f'\"refreshDelayAfterPriorityStockFoundSeconds\" ({refreshDelayAfterPriorityStockFoundSeconds}) must be greater than \"refreshEverySeconds\" ({refreshEverySeconds})')
+
+        return refreshDelayAfterPriorityStockFoundSeconds
+
     def getRefreshEverySeconds(self) -> int:
         jsonContents = self.__readJson()
         refreshEverySeconds = utils.getIntFromDict(jsonContents, 'refreshEverySeconds')
 
         if refreshEverySeconds < 60:
-            raise ValueError(f'\"refreshEverySeconds\" is an illegal value: {refreshEverySeconds}')
+            raise ValueError(f'\"refreshEverySeconds\" is too aggressive: {refreshEverySeconds}')
 
         return refreshEverySeconds
 
@@ -140,9 +162,9 @@ class AnalogueSettingsHelper():
 
         for userJson in jsonContents['usersToNotify']:
             users.append(AnalogueUserToNotify(
-                discriminator=utils.getIntFromDict(userJson, 'discriminator'),
-                _id=utils.getIntFromDict(userJson, 'id'),
-                name=utils.getStrFromDict(userJson, 'name')
+                discriminator = utils.getIntFromDict(userJson, 'discriminator'),
+                _id = utils.getIntFromDict(userJson, 'id'),
+                name = utils.getStrFromDict(userJson, 'name')
             ))
 
         return users
@@ -157,7 +179,7 @@ class AnalogueSettingsHelper():
         if jsonContents is None:
             raise IOError(f'Error reading from Analogue settings file: \"{self.__analogueSettingsFile}\"')
         elif len(jsonContents) == 0:
-            raise ValueError(f'JSON contents of Analogue Settings file \"{self.__analogueSettingsFile}\" is empty')
+            raise ValueError(f'JSON contents of Analogue settings file \"{self.__analogueSettingsFile}\" is empty')
 
         return jsonContents
 
