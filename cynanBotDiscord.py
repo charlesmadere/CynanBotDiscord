@@ -167,8 +167,10 @@ class CynanBotDiscord(commands.Bot):
 
             for twitchAnnounceServer in twitchAnnounceServers:
                 channel = self.__fetchChannel(twitchAnnounceServer.getDiscordChannelId())
-                await channel.send(f'')
-                # TODO send live message to channel
+                guildMember = await channel.guild.fetch_member(liveTwitchUser.getDiscordId())
+
+                if guildMember is not None:
+                    await channel.send(f'{liveTwitchUser.getDiscordName()} is now live! https://twitch.tv/{liveTwitchUser.getTwitchName()}')
 
     async def __createPriorityStockAvailableMessageText(
         self,

@@ -7,6 +7,7 @@ from cynanBotDiscord import CynanBotDiscord
 from generalSettingsHelper import GeneralSettingsHelper
 from twitchAccounceSettingsHelper import TwitchAnnounceSettingsHelper
 from twitchLiveHelper import TwitchLiveHelper
+from twitchTokensRepository import TwitchTokensRepository
 
 
 analogueSettingsHelper = AnalogueSettingsHelper()
@@ -15,13 +16,15 @@ authHelper = AuthHelper()
 cynanBotDiscord = CynanBotDiscord(
     analogueSettingsHelper = AnalogueSettingsHelper(),
     analogueStoreRepository = AnalogueStoreRepository(
-        cacheTimeDelta = timedelta(analogueSettingsHelper.getAnalogueStoreCacheSeconds())
+        cacheTimeDelta = timedelta(seconds = analogueSettingsHelper.getAnalogueStoreCacheSeconds())
     ),
     authHelper = authHelper,
     generalSettingsHelper = GeneralSettingsHelper(),
     twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper(),
     twitchLiveHelper = TwitchLiveHelper(
-        clientId = authHelper.getTwitchClientId()
+        clientId = authHelper.getTwitchClientId(),
+        clientSecret = authHelper.getTwitchClientSecret(),
+        twitchTokensRepository = TwitchTokensRepository()
     )
 )
 

@@ -36,8 +36,16 @@ class AuthHelper():
             raise ValueError(f'Auth file \"{authFile}\" has malformed \"twitchClientId\" value: \"{twitchClientId}\"')
         self.__twitchClientId = twitchClientId
 
+        twitchClientSecret = jsonContents.get('twitchClientSecret')
+        if not utils.isValidStr(twitchClientSecret):
+            raise ValueError(f'Auth file \"{authFile}\" has malformed \"twitchClientSecret\" value: \"{twitchClientSecret}\"')
+        self.__twitchClientSecret = twitchClientSecret
+
     def getDiscordToken(self) -> str:
         return self.__discordToken
 
     def getTwitchClientId(self) -> str:
         return self.__twitchClientId
+
+    def getTwitchClientSecret(self) -> str:
+        return self.__twitchClientSecret
