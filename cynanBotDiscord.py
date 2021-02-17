@@ -53,9 +53,12 @@ class CynanBotDiscord(commands.Bot):
         self.__twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
         self.__twitchLiveHelper = twitchLiveHelper
 
-        self.__analogueMessageCoolDown = timedelta(minutes = 5)
-        self.__lastAnalogueMessageTime = datetime.now() - self.__analogueMessageCoolDown
-        self.__liveTwitchUsers = TimedDict(timedelta(minutes = 15))
+        now = datetime.now()
+        self.__analogueCommandCoolDown = timedelta(minutes = 10)
+        self.__lastAnalogueCommandMessageTime = now - self.__analogueCommandCoolDown
+        self.__lastAnalogueCheckTime = now - timedelta(seconds = self.__analogueSettingsHelper.getRefreshEverySeconds())
+        self.__lastTwitchCheckTime = now - timedelta(seconds = self.__twitchAnnounceSettingsHelper.getRefreshEverySeconds())
+        self.__liveTwitchUsersAnnounceTimes = dict()
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, CommandNotFound):
@@ -103,10 +106,10 @@ class CynanBotDiscord(commands.Bot):
         await self.wait_until_ready()
 
         now = datetime.now()
-        if now - self.__analogueMessageCoolDown <= self.__lastAnalogueMessageTime:
+        if self.__lastAnalogueCommandMessageTime + self.__analogueCommandCoolDown >= now:
             return
 
-        self.__lastAnalogueMessageTime = now
+        self.__lastAnalogueCommandMessageTime = now
 
         try:
             result = self.__analogueStoreRepository.fetchStoreStock()
@@ -116,10 +119,14 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('⚠ Error fetching Analogue stock')
 
     async def __checkAnalogueStoreStock(self):
-        # TODO return if it's too early to check for stock again
+        now = datetime.now()
+
+        if self.__lastAnalogueCheckTime + timedelta(seconds = self.__analogueSettingsHelper.getRefreshEverySeconds()) >= now:
+            return
+
+        self.__lastAnalogueCheckTime = now
 
         channelIds = self.__analogueSettingsHelper.getChannelIds()
-
         if not utils.hasItems(channelIds):
             return
 
@@ -137,25 +144,37 @@ class CynanBotDiscord(commands.Bot):
                 await channel.send(text)
 
     async def __checkTwitchStreams(self):
-        # TODO return if it's too early for another announce
+        now = datetime.now()
+
+        if self.__lastTwitchCheckTime + timedelta(seconds = self.__twitchAnnounceSettingsHelper.getRefreshEverySeconds()) >= now:
+            return
+
+        self.__lastTwitchCheckTime = now
 
         twitchAnnounceUsers = self.__twitchAnnounceSettingsHelper.getAllTwitchAnnounceUsers()
-
         if not utils.hasItems(twitchAnnounceUsers):
             return
 
-        liveTwitchUsers = list()
-
-        for twitchAnnounceUser in twitchAnnounceUsers:
-            if self.__twitchLiveHelper.isLive(twitchAnnounceUser):
-                liveTwitchUsers.append(twitchAnnounceUser)
-
+        liveTwitchUsers = self.__twitchLiveHelper.whoIsLive(twitchAnnounceUsers)
         if not utils.hasItems(liveTwitchUsers):
             return
 
-        now = datetime.now()
+        removeTheseUsers = list()
+
         for liveTwitchUser in liveTwitchUsers:
-            self.__liveTwitchUsers[liveTwitchUser.getTwitchName().lower()] = now
+            lastAnnounceTime = self.__liveTwitchUsersAnnounceTimes.get(liveTwitchUser.getTwitchName().lower())
+
+            if lastAnnounceTime is not None and lastAnnounceTime >= now:
+                removeTheseUsers.append(liveTwitchUser)
+            else:
+                self.__liveTwitchUsersAnnounceTimes[liveTwitchUser.getTwitchName().lower()] = now
+
+        if utils.hasItems(removeTheseUsers):
+            for removeThisUser in removeTheseUsers:
+                liveTwitchUsers.remove(removeThisUser)
+
+        if not utils.hasItems(liveTwitchUsers):
+            return
 
         for liveTwitchUser in liveTwitchUsers:
             twitchAnnounceServers = self.__twitchAnnounceSettingsHelper.getTwitchAnnounceServersForUser(

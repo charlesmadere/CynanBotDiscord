@@ -144,6 +144,15 @@ class TwitchAnnounceSettingsHelper():
 
         return twitchAnnounceUsers
 
+    def getAnnounceFalloffMinutes(self) -> int:
+        jsonContents = self.__readJson()
+        announceFalloffMinutes = utils.getIntFromDict(jsonContents, 'announceFalloffMinutes')
+
+        if announceFalloffMinutes < 30:
+            raise ValueError(f'\"announceFalloffMinutes\" is too aggressive: {announceFalloffMinutes}')
+
+        return announceFalloffMinutes
+
     def getRefreshEverySeconds(self) -> int:
         jsonContents = self.__readJson()
         refreshEverySeconds = utils.getIntFromDict(jsonContents, 'refreshEverySeconds')

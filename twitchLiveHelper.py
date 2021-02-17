@@ -28,9 +28,9 @@ class TwitchLiveHelper():
         self.__clientSecret = clientSecret
         self.__twitchTokensRepository = twitchTokensRepository
 
-    def isLive(self, users: List[TwitchAnnounceUser]) -> dict[TwitchAnnounceUser, bool]:
+    def whoIsLive(self, users: List[TwitchAnnounceUser]) -> dict[TwitchAnnounceUser, bool]:
         if not utils.hasItems(users):
-            raise ValueError(f'users argument is malformed: \"{users}\"')
+            return None
 
         userNamesList = list()
         for user in users:
