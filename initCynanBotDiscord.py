@@ -20,7 +20,9 @@ cynanBotDiscord = CynanBotDiscord(
     authHelper = authHelper,
     generalSettingsHelper = GeneralSettingsHelper(),
     twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper(),
-    twitchLiveHelper = TwitchLiveHelper()
+    twitchLiveHelper = TwitchLiveHelper(
+        clientId = authHelper.getTwitchClientId()
+    )
 )
 
 ###################################################################################################
@@ -58,4 +60,4 @@ async def removeUser(ctx, *args):
 
 
 print('Starting CynanBotDiscord...')
-cynanBotDiscord.run(authHelper.getToken())
+cynanBotDiscord.run(authHelper.getDiscordToken())
