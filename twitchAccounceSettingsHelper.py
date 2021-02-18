@@ -59,6 +59,9 @@ class TwitchAnnounceUser():
     def getDiscordName(self) -> str:
         return self.__discordName
 
+    def getDiscordNameAndDiscriminator(self) -> str:
+        return f'{self.__discordName}#{self.__discordDiscriminator}'
+
     def getTwitchName(self) -> str:
         return self.__twitchName
 

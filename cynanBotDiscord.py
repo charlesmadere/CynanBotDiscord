@@ -80,7 +80,6 @@ class CynanBotDiscord(commands.Bot):
             return
 
         mentions = self.__getMentionsFromCtx(ctx)
-
         if not utils.hasItems(mentions):
             await ctx.send('please mention the user(s) you want to add')
             return
@@ -113,7 +112,27 @@ class CynanBotDiscord(commands.Bot):
         if not self.__isAuthorAdministrator(ctx):
             return
 
-        # TODO
+        mentions = self.__getMentionsFromCtx(ctx)
+        if not utils.hasItems(mentions):
+            await ctx.send('please mention the user you want to add')
+            return
+
+        content = utils.getCleanedSplits(ctx.message.content)
+        if not utils.hasItems(content):
+            await ctx.send('please give the user\'s twitch handle, as taken directly from their ttv url')
+            return
+
+        mention = mentions[0]
+
+        user = self.__twitchAnnounceSettingsHelper.addUserToTwitchAnnounceUsers(
+            discordDiscriminator = int(mention.discriminator),
+            discordId = int(mention.id),
+            discordName = mention.name,
+            twitchName = content[len(content) - 1]
+        )
+
+        print(f'Added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to twitch announce users ({utils.getNowTimeText()})')
+        await ctx.send(f'added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to twitch announce users')
 
     async def analogue(self, ctx):
         if ctx is None:
@@ -377,7 +396,6 @@ class CynanBotDiscord(commands.Bot):
             return
 
         mentions = self.__getMentionsFromCtx(ctx)
-
         if not utils.hasItems(mentions):
             await ctx.send('please mention the user(s) you want to remove')
             return
@@ -403,4 +421,20 @@ class CynanBotDiscord(commands.Bot):
         if not self.__isAuthorAdministrator(ctx):
             return
 
-        # TODO
+        mentions = self.__getMentionsFromCtx(ctx)
+        if not utils.hasItems(mentions):
+            await ctx.send('please mention the user(s) you want to remove')
+            return
+
+        users = list()
+
+        for mention in mentions:
+            user = self.__twitchAnnounceSettingsHelper.removeUserFromTwitchAnnounceUsers(
+                discordId = int(mention.id)
+            )
+
+            users.append(f'`{user.getDiscordNameAndDiscriminator()}`')
+
+        usersString = ', '.join(users)
+        print(f'Removed {usersString} from twitch announce users ({utils.getNowTimeText()})')
+        await ctx.send(f'removed {usersString} from twitch announce users')
