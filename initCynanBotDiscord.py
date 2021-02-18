@@ -38,24 +38,36 @@ cynanBotDiscord = CynanBotDiscord(
 ###################################################################################################
 
 @cynanBotDiscord.command()
-async def addUser(ctx, *args):
-    await cynanBotDiscord.addUser(ctx)
+async def addAnalogueUser(ctx, *args):
+    await cynanBotDiscord.addAnalogueUser(ctx)
+
+@cynanBotDiscord.command()
+async def addTwitchUser(ctx, *args):
+    await cynanBotDiscord.addTwitchUser(ctx)
 
 @cynanBotDiscord.command()
 async def analogue(ctx, *args):
     await cynanBotDiscord.analogue(ctx)
 
 @cynanBotDiscord.command()
+async def listAnalogueUsers(ctx, *args):
+    await cynanBotDiscord.listAnalogueUsers(ctx)
+
+@cynanBotDiscord.command()
 async def listPriorityProducts(ctx, *args):
     await cynanBotDiscord.listPriorityProducts(ctx)
 
 @cynanBotDiscord.command()
-async def listUsers(ctx, *args):
-    await cynanBotDiscord.listUsers(ctx)
+async def listTwitchUsers(ctx, *args):
+    await cynanBotDiscord.listTwitchUsers(ctx)
 
 @cynanBotDiscord.command()
-async def removeUser(ctx, *args):
-    await cynanBotDiscord.removeUser(ctx)
+async def removeAnalogueUser(ctx, *args):
+    await cynanBotDiscord.removeAnalogueUser(ctx)
+
+@cynanBotDiscord.command()
+async def removeTwitchUser(ctx, *args):
+    await cynanBotDiscord.removeTwitchUser(ctx)
 
 ###################################################################################################
 # end CynanBotDiscord commands                                                                    #

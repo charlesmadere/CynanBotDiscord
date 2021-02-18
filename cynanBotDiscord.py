@@ -70,7 +70,7 @@ class CynanBotDiscord(commands.Bot):
         print(f'{self.user} is ready!')
         self.loop.create_task(self.__refreshAnalogueStoreAndWait())
 
-    async def addUser(self, ctx):
+    async def addAnalogueUser(self, ctx):
         if ctx is None:
             raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
 
@@ -80,6 +80,11 @@ class CynanBotDiscord(commands.Bot):
             return
 
         mentions = self.__getMentionsFromCtx(ctx)
+
+        if not utils.hasItems(mentions):
+            await ctx.send('please mention the user(s) you want to add')
+            return
+
         users = list()
 
         for mention in mentions:
@@ -98,6 +103,17 @@ class CynanBotDiscord(commands.Bot):
         usersString = ', '.join(users)
         print(f'Added {usersString} to users to notify ({utils.getNowTimeText()})')
         await ctx.send(f'added {usersString} to users to notify')
+
+    async def addTwitchUser(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
+        # TODO
 
     async def analogue(self, ctx):
         if ctx is None:
@@ -273,12 +289,7 @@ class CynanBotDiscord(commands.Bot):
         if message is None:
             raise ValueError(f'ctx ({ctx}) message is malformed: \"{message}\"')
 
-        mentions = message.mentions
-
-        if not utils.hasItems(mentions):
-            raise ValueError(f'No users mentioned: ctx ({ctx}) message: \"{message}\"')
-
-        return mentions
+        return message.mentions
 
     def __isAuthorAdministrator(self, ctx):
         if ctx is None:
@@ -292,6 +303,39 @@ class CynanBotDiscord(commands.Bot):
                     return True
 
         return False
+
+    async def listAnalogueUsers(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
+        users = self.__analogueSettingsHelper.getUsersToNotify()
+
+        if utils.hasItems(users):
+            userNames = list()
+
+            for user in users:
+                userNames.append(f'`{user.getNameAndDiscriminator()}`')
+
+            userNamesString = ', '.join(userNames)
+            await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
+        else:
+            await ctx.send('no users are set to be notified when priority Analogue products are available')
+
+    async def listTwitchUsers(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
+        # TODO
 
     async def listPriorityProducts(self, ctx):
         if ctx is None:
@@ -315,28 +359,6 @@ class CynanBotDiscord(commands.Bot):
         else:
             await ctx.send('no Analogue products are currently being monitored for availability')
 
-    async def listUsers(self, ctx):
-        if ctx is None:
-            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
-
-        await self.wait_until_ready()
-
-        if not self.__isAuthorAdministrator(ctx):
-            return
-
-        users = self.__analogueSettingsHelper.getUsersToNotify()
-
-        if utils.hasItems(users):
-            userNames = list()
-
-            for user in users:
-                userNames.append(f'`{user.getNameAndDiscriminator()}`')
-
-            userNamesString = ', '.join(userNames)
-            await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
-        else:
-            await ctx.send('no users are set to be notified when priority Analogue products are available')
-
     async def __refreshAnalogueStoreAndWait(self):
         await self.wait_until_ready()
 
@@ -345,7 +367,7 @@ class CynanBotDiscord(commands.Bot):
             await self.__checkTwitchStreams()
             await asyncio.sleep(self.__generalSettingsHelper.getRefreshEverySeconds())
 
-    async def removeUser(self, ctx):
+    async def removeAnalogueUser(self, ctx):
         if ctx is None:
             raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
 
@@ -355,11 +377,15 @@ class CynanBotDiscord(commands.Bot):
             return
 
         mentions = self.__getMentionsFromCtx(ctx)
+
+        if not utils.hasItems(mentions):
+            await ctx.send('please mention the user(s) you want to remove')
+            return
+
         users = list()
 
         for mention in mentions:
-            _id = int(mention.id)
-            user = self.__analogueSettingsHelper.removeUserFromUsersToNotify(_id)
+            user = self.__analogueSettingsHelper.removeUserFromUsersToNotify(int(mention.id))
 
             if user is not None:
                 users.append(f'`{user.getNameAndDiscriminator()}`')
@@ -367,3 +393,14 @@ class CynanBotDiscord(commands.Bot):
         usersString = ', '.join(users)
         print(f'Removed {usersString} from users to notify ({utils.getNowTimeText()})')
         await ctx.send(f'removed {usersString} from users to notify')
+
+    async def removeTwitchUser(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
+        # TODO
