@@ -3,6 +3,9 @@ import os
 from typing import List
 
 import CynanBotCommon.utils as utils
+from CynanBotCommon.backingDatabase import BackingDatabase
+from user import User
+from usersRepository import UsersRepository
 
 
 class TwitchAnnounceServer():
@@ -27,53 +30,6 @@ class TwitchAnnounceServer():
         return self.__discordUserIds
 
 
-class TwitchAnnounceUser():
-
-    def __init__(
-        self,
-        discordDiscriminator: int,
-        discordId: int,
-        discordName: str,
-        twitchName: str
-    ):
-        if not utils.isValidNum(discordDiscriminator):
-            raise ValueError(f'discordDiscriminator argument is malformed: \"{discordDiscriminator}\"')
-        elif not utils.isValidNum(discordId):
-            raise ValueError(f'discordId argument is malformed: \"{discordId}\"')
-        elif not utils.isValidStr(discordName):
-            raise ValueError(f'discordName argument is malformed: \"{discordName}\"')
-        elif not utils.isValidStr(twitchName):
-            raise ValueError(f'twitchName argument is malformed: \"{twitchName}\"')
-
-        self.__discordDiscriminator = discordDiscriminator
-        self.__discordId = discordId
-        self.__discordName = discordName
-        self.__twitchName = twitchName
-
-    def getDiscordDiscriminator(self) -> int:
-        return self.__discordDiscriminator
-
-    def getDiscordId(self) -> int:
-        return self.__discordId
-
-    def getDiscordName(self) -> str:
-        return self.__discordName
-
-    def getDiscordNameAndDiscriminator(self) -> str:
-        return f'{self.__discordName}#{self.__discordDiscriminator}'
-
-    def getTwitchName(self) -> str:
-        return self.__twitchName
-
-    def toJsonDict(self) -> dict:
-        return {
-            'discordDiscriminator': self.__discordDiscriminator,
-            'discordId': self.__discordId,
-            'discordName': self.__discordName,
-            'twitchName': self.__twitchName
-        }
-
-
 class TwitchAnnounceSettingsHelper():
 
     def __init__(
@@ -90,8 +46,9 @@ class TwitchAnnounceSettingsHelper():
         discordDiscriminator: int,
         discordId: int,
         discordName: str,
-        twitchName: str
-    ) -> TwitchAnnounceUser:
+        twitchName: str,
+        discordChannelId: int
+    ) -> User:
         if not utils.isValidNum(discordDiscriminator):
             raise ValueError(f'discordDiscriminator argument is malformed: \"{discordDiscriminator}\"')
         elif not utils.isValidNum(discordId):
@@ -100,6 +57,25 @@ class TwitchAnnounceSettingsHelper():
             raise ValueError(f'discordName argument is malformed: \"{discordName}\"')
         elif not utils.isValidStr(twitchName):
             raise ValueError(f'twitchName argument is malformed: \"{twitchName}\"')
+        elif not utils.isValidNum(discordChannelId):
+            raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
+
+        self.__usersRepository.setUser(
+            discordDiscriminator = discordDiscriminator,
+            discordId = discordId,
+            discordName = discordName,
+            twitchName = twitchName
+        )
+
+        connection = self.__backingDatabase.getConnection()
+        connection.execute(
+            f'''
+                CREATE TABLE IF NOT EXISTS twitchChannelAnnounceUsers_{discordChannelId} (
+                    discordUserid TEXT NOT NULL COLLATE NOCASE
+                )
+            '''
+        )
+        connection.commit()
 
         jsonContents = self.__readJson()
         add = True
