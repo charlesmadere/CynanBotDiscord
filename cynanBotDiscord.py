@@ -370,7 +370,7 @@ class CynanBotDiscord(commands.Bot):
             return
 
         twitchAnnounceChannel = self.__twitchAnnounceChannelsRepository.fetchTwitchAnnounceChannel(ctx.channel.id)
-        if not twitchAnnounceChannel.hasUsers():
+        if twitchAnnounceChannel is None or not twitchAnnounceChannel.hasUsers():
             await ctx.send('no users are currently having their Twitch streams announced')
             return
 
