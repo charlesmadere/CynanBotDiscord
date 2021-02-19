@@ -34,6 +34,8 @@ class TwitchLiveHelper():
         elif len(users) > 100:
             raise ValueError(f'more users than can be asked for from the Twitch API: \"{len(users)}\"')
 
+        print(f'Checking Twitch live status for {len(users)} user(s)... ({utils.getNowTimeText()})')
+
         userNamesList = list[str]()
         for user in users:
             userNamesList.append(user.getTwitchName())
@@ -54,7 +56,6 @@ class TwitchLiveHelper():
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
 
         jsonResponse = rawResponse.json()
-
         dataArray = jsonResponse['data']
         whoIsLive = list[User]()
 
