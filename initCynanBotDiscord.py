@@ -38,6 +38,7 @@ cynanBotDiscord = CynanBotDiscord(
     )
 )
 
+
 ###################################################################################################
 # begin CynanBotDiscord Commands                                                                  #
 # More information on Discord bot commands available here:                                        #
