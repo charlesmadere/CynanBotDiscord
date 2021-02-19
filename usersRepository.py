@@ -22,7 +22,6 @@ class UsersRepository():
                 )
             '''
         )
-
         connection.commit()
 
     def addOrUpdateUser(self, user: User):
@@ -39,7 +38,6 @@ class UsersRepository():
             ''',
             ( str(user.getDiscordDiscriminator()), str(user.getDiscordId()), user.getDiscordName(), user.getTwitchName() )
         )
-
         connection.commit()
         cursor.close()
 

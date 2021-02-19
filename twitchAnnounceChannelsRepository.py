@@ -49,7 +49,6 @@ class TwitchAnnounceChannelsRepository():
                 )
             '''
         )
-
         connection.commit()
 
     def addUser(self, user: User, discordChannelId: int):
@@ -60,7 +59,8 @@ class TwitchAnnounceChannelsRepository():
 
         self.__usersRepository.addOrUpdateUser(user)
 
-        cursor = self.__backingDatabase.getConnection().cursor()
+        connection = self.__backingDatabase.getConnection()
+        cursor = connection.cursor()
         cursor.execute(
             '''
                 INSERT INTO twitchAnnounceChannels (discordChannelId)
@@ -69,7 +69,7 @@ class TwitchAnnounceChannelsRepository():
             ''',
             ( str(discordChannelId), )
         )
-
+        connection.commit()
         cursor.close()
 
         connection = self.__backingDatabase.getConnection()
@@ -80,10 +80,9 @@ class TwitchAnnounceChannelsRepository():
                 )
             '''
         )
-
         connection.commit()
 
-        cursor = self.__backingDatabase.getConnection().cursor()
+        cursor = connection.cursor()
         cursor.execute(
             f'''
                 INSERT INTO twitchAnnounceChannel_{discordChannelId} (discordUserId)
@@ -92,7 +91,7 @@ class TwitchAnnounceChannelsRepository():
             ''',
             ( str(user.getDiscordId()), )
         )
-
+        connection.commit()
         cursor.close()
 
     def fetchTwitchAnnounceChannel(self, discordChannelId: int) ->  TwitchAnnounceChannel:
@@ -147,7 +146,8 @@ class TwitchAnnounceChannelsRepository():
         elif not utils.isValidNum(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
 
-        cursor = self.__backingDatabase.getConnection().cursor()
+        connection = self.__backingDatabase.getConnection()
+        cursor = connection.cursor()
 
         try:
             cursor.execute(
@@ -160,4 +160,5 @@ class TwitchAnnounceChannelsRepository():
         except OperationalError:
             pass
 
+        connection.commit()
         cursor.close()
