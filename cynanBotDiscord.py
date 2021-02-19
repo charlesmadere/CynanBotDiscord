@@ -466,7 +466,7 @@ class CynanBotDiscord(commands.Bot):
                 discordName = mention.name
             )
 
-            self.__twitchAnnounceChannelsRepository.removeUser(user)
+            self.__twitchAnnounceChannelsRepository.removeUser(user, ctx.channel.id)
             userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
         usersString = ', '.join(userNames)
