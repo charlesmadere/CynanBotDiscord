@@ -65,7 +65,7 @@ class TwitchAnnounceChannelsRepository():
             '''
                 INSERT INTO twitchAnnounceChannels (discordChannelId)
                 VALUES (?)
-                ON CONFLICT(discordChannelId) ABORT
+                ON CONFLICT ABORT
             ''',
             ( discordChannelId, )
         )
@@ -88,7 +88,7 @@ class TwitchAnnounceChannelsRepository():
             f'''
                 INSERT INTO twitchAnnounceChannel_{discordChannelId} (discordUserId)
                 VALUES (?)
-                ON CONFLICT(discordUserId) ABORT
+                ON CONFLICT ABORT
             ''',
             ( user.getDiscordId(), )
         )
