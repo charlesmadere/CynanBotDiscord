@@ -66,4 +66,5 @@ class TwitchLiveHelper():
                 if userName.lower() == user.getTwitchName().lower():
                     whoIsLive.append(user)
 
+        print(f'Number of users live on Twitch: {len(whoIsLive)}')
         return whoIsLive
