@@ -135,7 +135,7 @@ class TwitchAnnounceChannelsRepository():
         twitchAnnounceChannels = list()
 
         for row in rows:
-            twitchAnnounceChannel = self.fetchTwitchAnnounceChannel(row[0])
+            twitchAnnounceChannel = self.fetchTwitchAnnounceChannel(int(row[0]))
             twitchAnnounceChannels.append(twitchAnnounceChannel)
 
         return twitchAnnounceChannel
