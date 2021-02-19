@@ -148,12 +148,16 @@ class TwitchAnnounceChannelsRepository():
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
 
         cursor = self.__backingDatabase.getConnection().cursor()
-        cursor.execute(
-            f'''
-                DELETE FROM twitchAnnounceChannel_{discordChannelId}
-                WHERE discordUserId = ?
-            ''',
-            ( user.getDiscordId(), )
-        )
+
+        try:
+            cursor.execute(
+                f'''
+                    DELETE FROM twitchAnnounceChannel_{discordChannelId}
+                    WHERE discordUserId = ?
+                ''',
+                ( user.getDiscordId(), )
+            )
+        except OperationalError:
+            pass
 
         cursor.close()
