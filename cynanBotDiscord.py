@@ -168,18 +168,19 @@ class CynanBotDiscord(commands.Bot):
         if not utils.hasItems(channelIds):
             return
 
+        # I guess in the future this feature will support multiple channels or something...
+        channelId = channelIds[0]
+
         storeStock = self.__analogueStoreRepository.fetchStoreStock()
 
         text = None
         if storeStock is not None:
-            text = await self.__createPriorityStockAvailableMessageText(storeStock)
+            text = await self.__createPriorityStockAvailableMessageText(storeStock, channelId)
 
         if utils.isValidStr(text):
             print(f'Sending Analogue stock message ({utils.getNowTimeText(includeSeconds = True)}):\n{text}')
-
-            for channelId in channelIds:
-                channel = self.__fetchChannel(channelId)
-                await channel.send(text)
+            channel = self.__fetchChannel(channelId)
+            await channel.send(text)
 
     async def __checkTwitchStreams(self):
         now = datetime.now()
