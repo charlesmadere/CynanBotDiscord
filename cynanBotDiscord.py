@@ -63,7 +63,7 @@ class CynanBotDiscord(commands.Bot):
         self.__analogueCommandCoolDown = timedelta(minutes = 10)
         self.__lastAnalogueCommandMessageTime = now - self.__analogueCommandCoolDown
         self.__lastAnalogueCheckTime = now - timedelta(seconds = self.__analogueSettingsHelper.getRefreshEverySeconds())
-        self.__lastTwitchCheckTime = now - timedelta(seconds = self.__twitchAnnounceSettingsHelper.getRefreshEverySeconds())
+        self.__lastTwitchCheckTime = now - timedelta(minutes = self.__twitchAnnounceSettingsHelper.getRefreshEveryMinutes())
         self.__liveTwitchUsersAnnounceTimes = dict()
 
     async def on_command_error(self, ctx, error):
