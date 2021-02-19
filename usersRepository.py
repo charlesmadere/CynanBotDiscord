@@ -37,7 +37,7 @@ class UsersRepository():
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, twitchName = excluded.twitchName
             ''',
-            ( user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getTwitchName() )
+            ( str(user.getDiscordDiscriminator()), str(user.getDiscordId()), user.getDiscordName(), user.getTwitchName() )
         )
 
         connection.commit()
