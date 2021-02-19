@@ -90,8 +90,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to add')
             return
 
-        userNames = list[str]()
-
+        userNames = list()
         for mention in mentions:
             user = User(
                 discordDiscriminator = int(mention.discriminator),
@@ -100,7 +99,7 @@ class CynanBotDiscord(commands.Bot):
             )
 
             self.__analogueSettingsHelper.addUser(user)
-            userNames.append(f'`{user.getNameAndDiscriminator()}`')
+            userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
         usersString = ', '.join(userNames)
         print(f'Added {usersString} to users to notify ({utils.getNowTimeText()})')
@@ -208,7 +207,7 @@ class CynanBotDiscord(commands.Bot):
 
                     userIdsToChannels[user.getDiscordId()].add(twitchAnnounceChannel.getDiscordChannelId())
 
-        removeTheseUserIds = list[int]()
+        removeTheseUserIds = list()
 
         for userId in userIdsToUsers:
             lastAnnounceTime = self.__liveTwitchUsersAnnounceTimes.get(userId)
@@ -224,7 +223,7 @@ class CynanBotDiscord(commands.Bot):
         if not utils.hasItems(userIdsToChannels) or not utils.hasItems(userIdsToUsers):
             return
 
-        users = list[User]()
+        users = list()
         for user in userIdsToUsers.values():
             users.append(user)
 
@@ -354,9 +353,9 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('no users are set to be notified when priority Analogue products are available')
             return
 
-        userNames = list[str]()
+        userNames = list()
         for user in users:
-            userNames.append(f'`{user.getNameAndDiscriminator()}`')
+            userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
         userNamesString = ', '.join(userNames)
         await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
@@ -375,7 +374,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('no users are currently having their Twitch streams announced')
             return
 
-        userNames = list[str]()
+        userNames = list()
         for user in twitchAnnounceChannel.getUsers():
             if user.hasTwitchName():
                 userNames.append(f'`{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()})')
@@ -397,7 +396,7 @@ class CynanBotDiscord(commands.Bot):
         priorityStockProductTypes = self.__analogueSettingsHelper.getPriorityStockProductStrings()
 
         if utils.hasItems(priorityStockProductTypes):
-            productTypesStrings = list[str]()
+            productTypesStrings = list()
 
             for productTypeString in priorityStockProductTypes:
                 productTypesStrings.append(f'`{productTypeString}`')
@@ -429,7 +428,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to remove')
             return
 
-        userNames = list[str]()
+        userNames = list()
 
         for mention in mentions:
             user = User(
@@ -459,7 +458,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to remove')
             return
 
-        userNames = list[str]()
+        userNames = list()
         for mention in mentions:
             user = User(
                 discordDiscriminator = int(mention.discriminator),

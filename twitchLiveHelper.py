@@ -36,7 +36,7 @@ class TwitchLiveHelper():
 
         print(f'Checking Twitch live status for {len(users)} user(s)... ({utils.getNowTimeText()})')
 
-        userNamesList = list[str]()
+        userNamesList = list()
         for user in users:
             userNamesList.append(user.getTwitchName())
         userNames = ','.join(userNamesList)
