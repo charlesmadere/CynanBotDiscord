@@ -1,10 +1,4 @@
 {
     "announceFalloffMinutes": 30,
-    "refreshEverySeconds": 300,
-    "twitchAnnounceServers": {
-
-    },
-    "twitchAnnounceUsers": {
-
-    }
+    "refreshEveryMinutes": 5
 }
