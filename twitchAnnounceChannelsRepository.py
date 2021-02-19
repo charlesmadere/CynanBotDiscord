@@ -65,9 +65,9 @@ class TwitchAnnounceChannelsRepository():
             '''
                 INSERT INTO twitchAnnounceChannels (discordChannelId)
                 VALUES (?)
-                ON CONFLICT ABORT
+                ON CONFLICT (discordChannelId) ABORT
             ''',
-            ( discordChannelId, )
+            ( str(discordChannelId), )
         )
 
         cursor.close()
@@ -88,9 +88,9 @@ class TwitchAnnounceChannelsRepository():
             f'''
                 INSERT INTO twitchAnnounceChannel_{discordChannelId} (discordUserId)
                 VALUES (?)
-                ON CONFLICT ABORT
+                ON CONFLICT (discordUserId) ABORT
             ''',
-            ( user.getDiscordId(), )
+            ( str(user.getDiscordId()), )
         )
 
         cursor.close()
@@ -155,7 +155,7 @@ class TwitchAnnounceChannelsRepository():
                     DELETE FROM twitchAnnounceChannel_{discordChannelId}
                     WHERE discordUserId = ?
                 ''',
-                ( user.getDiscordId(), )
+                ( str(user.getDiscordId()), )
             )
         except OperationalError:
             pass
