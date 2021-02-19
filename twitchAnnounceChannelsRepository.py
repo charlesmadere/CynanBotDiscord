@@ -1,3 +1,4 @@
+from sqlite3 import OperationalError
 from typing import List
 
 import CynanBotCommon.utils as utils
@@ -99,7 +100,12 @@ class TwitchAnnounceChannelsRepository():
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
 
         cursor = self.__backingDatabase.getConnection().cursor()
-        cursor.execute(f'SELECT discordUserId FROM twitchAnnounceChannel_{discordChannelId}')
+
+        try:
+            cursor.execute(f'SELECT discordUserId FROM twitchAnnounceChannel_{discordChannelId}')
+        except OperationalError:
+            return None
+
         rows = cursor.fetchall()
 
         if not utils.hasItems(rows):
