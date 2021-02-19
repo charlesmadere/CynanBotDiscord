@@ -25,6 +25,25 @@ class UsersRepository():
 
         connection.commit()
 
+    def addOrUpdateUser(self, user: User):
+        if user is None:
+            raise ValueError(f'user argument is malformed: \"{user}\"')
+
+        connection = self.__backingDatabase.getConnection()
+        cursor = connection.cursor()
+        cursor.execute(
+            '''
+                INSERT INTO users (discordDiscriminator, discordId, discordName, twitchName)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, twitchName = excluded.twitchName
+            ''',
+            ( user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getTwitchName() )
+        )
+
+        connection.commit()
+        cursor.close()
+
+
     def fetchUser(self, discordId: str) -> User:
         if not utils.isValidStr(discordId):
             raise ValueError(f'discordId argument is malformed: {discordId}')
@@ -53,30 +72,3 @@ class UsersRepository():
 
         cursor.close()
         return user
-
-    def setUser(
-        self,
-        discordDiscriminator: str,
-        discordId: str,
-        discordName: str,
-        twitchName: str = None
-    ):
-        if not utils.isValidStr(discordDiscriminator):
-            raise ValueError(f'discordDiscriminator argument is malformed: \"{discordDiscriminator}\"')
-        elif not utils.isValidStr(discordId):
-            raise ValueError(f'discordId argument is malformed: \"{discordId}\"')
-        elif not utils.isValidStr(discordName):
-            raise ValueError(f'discordName argument is malformed: \"{discordName}\"')
-
-        connection = self.__backingDatabase.getConnection()
-        cursor = connection.cursor()
-        cursor.execute(
-            '''
-                INSERT INTO users (discordDiscriminator, discordId, discordName, twitchName)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, twitchName = excluded.twitchName
-            ''',
-            ( discordDiscriminator, discordId, discordName, twitchName )
-        )
-        connection.commit()
-        cursor.close()
