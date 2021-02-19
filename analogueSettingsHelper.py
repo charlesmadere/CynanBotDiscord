@@ -100,7 +100,7 @@ class AnalogueSettingsHelper():
 
     def getUsersToNotify(self) -> Iterable[User]:
         jsonContents = self.__readJson()
-        users = list[User]()
+        users = list()
 
         for userJson in jsonContents['usersToNotify']:
             users.append(User(

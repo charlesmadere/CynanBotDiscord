@@ -57,7 +57,7 @@ class TwitchLiveHelper():
 
         jsonResponse = rawResponse.json()
         dataArray = jsonResponse['data']
-        whoIsLive = list[User]()
+        whoIsLive = list()
 
         for dataJson in dataArray:
             userName = dataJson['user_name']

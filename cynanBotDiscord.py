@@ -194,8 +194,8 @@ class CynanBotDiscord(commands.Bot):
         if not utils.hasItems(twitchAnnounceChannels):
             return
 
-        userIdsToChannels = dict[int, set[TwitchAnnounceChannel]]()
-        userIdsToUsers = dict[int, User]()
+        userIdsToChannels = dict()
+        userIdsToUsers = dict()
 
         for twitchAnnounceChannel in twitchAnnounceChannels:
             if utils.hasItems(twitchAnnounceChannel.getUsers()):
