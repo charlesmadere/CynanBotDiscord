@@ -353,8 +353,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('no users are set to be notified when priority Analogue products are available')
             return
 
-        userNames = list()
-
+        userNames = list[str]()
         for user in users:
             userNames.append(f'`{user.getNameAndDiscriminator()}`')
 
@@ -375,7 +374,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('no users are currently having their Twitch streams announced')
             return
 
-        userNames = list()
+        userNames = list[str]()
         for user in twitchAnnounceChannel.getUsers():
             if user.hasTwitchName():
                 userNames.append(f'`{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()})')
@@ -397,7 +396,7 @@ class CynanBotDiscord(commands.Bot):
         priorityStockProductTypes = self.__analogueSettingsHelper.getPriorityStockProductStrings()
 
         if utils.hasItems(priorityStockProductTypes):
-            productTypesStrings = list()
+            productTypesStrings = list[str]()
 
             for productTypeString in priorityStockProductTypes:
                 productTypesStrings.append(f'`{productTypeString}`')
@@ -459,8 +458,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to remove')
             return
 
-        users = list()
-
+        userNames = list[str]()
         for mention in mentions:
             user = User(
                 discordDiscriminator = int(mention.discriminator),
@@ -469,8 +467,8 @@ class CynanBotDiscord(commands.Bot):
             )
 
             self.__twitchAnnounceChannelsRepository.removeUser(user)
-            users.append(f'`{user.getDiscordNameAndDiscriminator()}`')
+            userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
-        usersString = ', '.join(users)
+        usersString = ', '.join(userNames)
         print(f'Removed {usersString} from twitch announce users ({utils.getNowTimeText()})')
         await ctx.send(f'removed {usersString} from twitch announce users')
