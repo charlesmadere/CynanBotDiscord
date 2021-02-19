@@ -138,7 +138,7 @@ class TwitchAnnounceChannelsRepository():
             twitchAnnounceChannel = self.fetchTwitchAnnounceChannel(int(row[0]))
             twitchAnnounceChannels.append(twitchAnnounceChannel)
 
-        return twitchAnnounceChannel
+        return twitchAnnounceChannels
 
     def removeUser(self, user: User, discordChannelId: int):
         if user is None:
