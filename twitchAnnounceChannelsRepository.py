@@ -45,7 +45,7 @@ class TwitchAnnounceChannelsRepository():
         connection.execute(
             '''
                 CREATE TABLE IF NOT EXISTS twitchAnnounceChannels (
-                    discordChannelId TEXT NOT NULL COLLATE NOCASE
+                    discordChannelId TEXT NOT NULL UNIQUE COLLATE NOCASE
                 )
             '''
         )
@@ -76,7 +76,7 @@ class TwitchAnnounceChannelsRepository():
         connection.execute(
             f'''
                 CREATE TABLE IF NOT EXISTS twitchAnnounceChannel_{discordChannelId} (
-                    discordUserId TEXT NOT NULL COLLATE NOCASE
+                    discordUserId TEXT NOT NULL UNIQUE COLLATE NOCASE
                 )
             '''
         )
