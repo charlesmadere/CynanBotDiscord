@@ -44,7 +44,7 @@ class TwitchLiveHelper():
         rawResponse = None
         try:
             rawResponse = requests.get(
-                url = f'https://api.twitch.tv/helix/streams&user_login={userNames}',
+                url = f'https://api.twitch.tv/helix/streams?user_login={userNames}',
                 headers = {
                     'Client-ID': self.__clientId,
                     'Authorization': f'Bearer {self.__twitchTokensRepository.getAccessToken()}'
