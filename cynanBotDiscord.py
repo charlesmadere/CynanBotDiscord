@@ -124,6 +124,10 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please give the user\'s twitch handle, as taken directly from their ttv url')
             return
 
+        if len(content) != 3:
+            await ctx.send('example command: `!addTwitchUser @CynanBot cynanbot` (the last parameter is their ttv handle)')
+            return
+
         user = User(
             discordDiscriminator = int(mentions[0].discriminator),
             discordId = int(mentions[0].id),
