@@ -10,10 +10,12 @@ from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import (AnalogueStoreRepository,
                                                     AnalogueStoreStock)
-from CynanBotCommon.timedDict import TimedDict
 from generalSettingsHelper import GeneralSettingsHelper
-from twitchAccounceSettingsHelper import TwitchAnnounceSettingsHelper
+from twitchAnnounceChannelsRepository import (TwitchAnnounceChannel,
+                                              TwitchAnnounceChannelsRepository)
+from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
 from twitchLiveHelper import TwitchLiveHelper
+from user import User
 
 
 class CynanBotDiscord(commands.Bot):
@@ -24,6 +26,7 @@ class CynanBotDiscord(commands.Bot):
         analogueStoreRepository: AnalogueStoreRepository,
         authHelper: AuthHelper,
         generalSettingsHelper: GeneralSettingsHelper,
+        twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository,
         twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper,
         twitchLiveHelper: TwitchLiveHelper
     ):
@@ -41,6 +44,8 @@ class CynanBotDiscord(commands.Bot):
             raise ValueError(f'authHelper argument is malformed: \"{authHelper}\"')
         elif generalSettingsHelper is None:
             raise ValueError(f'generalSettingsHelper argument is malformed: \"{generalSettingsHelper}\"')
+        elif twitchAnnounceChannelsRepository is None:
+            raise ValueError(f'twitchAnnounceChannelsRepository argument is malformed: \"{twitchAnnounceChannelsRepository}\"')
         elif twitchAnnounceSettingsHelper is None:
             raise ValueError(f'twitchAnnounceSttingsHelper argument is malformed: \"{twitchAnnounceSettingsHelper}\"')
         elif twitchLiveHelper is None:
@@ -50,6 +55,7 @@ class CynanBotDiscord(commands.Bot):
         self.__analogueStoreRepository = analogueStoreRepository
         self.__authHelper = authHelper
         self.__generalSettingsHelper = generalSettingsHelper
+        self.__twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository
         self.__twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
         self.__twitchLiveHelper = twitchLiveHelper
 
@@ -84,22 +90,19 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to add')
             return
 
-        users = list()
+        userNames = list[str]()
 
         for mention in mentions:
-            discriminator = int(mention.discriminator)
-            _id = int(mention.id)
-            name = mention.name
-
-            user = self.__analogueSettingsHelper.addUserToUsersToNotify(
-                discriminator = discriminator,
-                _id = _id,
-                name = name
+            user = User(
+                discordDiscriminator = int(mention.discriminator),
+                discordId = int(mention.id),
+                discordName = mention.name
             )
 
-            users.append(f'`{user.getNameAndDiscriminator()}`')
+            self.__analogueSettingsHelper.addUser(user)
+            userNames.append(f'`{user.getNameAndDiscriminator()}`')
 
-        usersString = ', '.join(users)
+        usersString = ', '.join(userNames)
         print(f'Added {usersString} to users to notify ({utils.getNowTimeText()})')
         await ctx.send(f'added {usersString} to users to notify')
 
@@ -122,14 +125,14 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please give the user\'s twitch handle, as taken directly from their ttv url')
             return
 
-        mention = mentions[0]
-
-        user = self.__twitchAnnounceSettingsHelper.addUserToTwitchAnnounceUsers(
-            discordDiscriminator = int(mention.discriminator),
-            discordId = int(mention.id),
-            discordName = mention.name,
+        user = User(
+            discordDiscriminator = int(mentions[0].discriminator),
+            discordId = int(mentions[0].id),
+            discordName = mentions[0].name,
             twitchName = content[len(content) - 1]
         )
+
+        self.__twitchAnnounceChannelsRepository.addUser(user, ctx.channel.id)
 
         print(f'Added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to twitch announce users ({utils.getNowTimeText()})')
         await ctx.send(f'added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to twitch announce users')
@@ -181,50 +184,63 @@ class CynanBotDiscord(commands.Bot):
     async def __checkTwitchStreams(self):
         now = datetime.now()
 
-        if self.__lastTwitchCheckTime + timedelta(seconds = self.__twitchAnnounceSettingsHelper.getRefreshEverySeconds()) >= now:
+        if self.__lastTwitchCheckTime + timedelta(minutes = self.__twitchAnnounceSettingsHelper.getRefreshEveryMinutes()) >= now:
             return
 
         self.__lastTwitchCheckTime = now
 
-        twitchAnnounceUsers = self.__twitchAnnounceSettingsHelper.getAllTwitchAnnounceUsers()
-        if not utils.hasItems(twitchAnnounceUsers):
+        twitchAnnounceChannels = self.__twitchAnnounceChannelsRepository.fetchTwitchAnnounceChannels()
+        if not utils.hasItems(twitchAnnounceChannels):
             return
 
-        liveTwitchUsers = self.__twitchLiveHelper.whoIsLive(twitchAnnounceUsers)
-        if not utils.hasItems(liveTwitchUsers):
-            return
+        userIdsToChannels = dict[int, set[TwitchAnnounceChannel]]()
+        userIdsToUsers = dict[int, User]()
 
-        removeTheseUsers = list()
+        for twitchAnnounceChannel in twitchAnnounceChannels:
+            if utils.hasItems(twitchAnnounceChannel.getUsers()):
+                for user in twitchAnnounceChannel.getUsers():
+                    if user.getDiscordId() not in userIdsToChannels:
+                        userIdsToChannels[user.getDiscordId()] = set()
 
-        for liveTwitchUser in liveTwitchUsers:
-            lastAnnounceTime = self.__liveTwitchUsersAnnounceTimes.get(liveTwitchUser.getTwitchName().lower())
+                        if user.getDiscordId() not in userIdsToUsers:
+                            userIdsToUsers[user.getDiscordId()] = user
+
+                    userIdsToChannels[user.getDiscordId()].add(twitchAnnounceChannel.getDiscordChannelId())
+
+        removeTheseUserIds = list[int]()
+
+        for userId in userIdsToUsers:
+            lastAnnounceTime = self.__liveTwitchUsersAnnounceTimes.get(userId)
 
             if lastAnnounceTime is not None and lastAnnounceTime >= now:
-                removeTheseUsers.append(liveTwitchUser)
-            else:
-                self.__liveTwitchUsersAnnounceTimes[liveTwitchUser.getTwitchName().lower()] = now
+                removeTheseUserIds.append(userId)
 
-        if utils.hasItems(removeTheseUsers):
-            for removeThisUser in removeTheseUsers:
-                liveTwitchUsers.remove(removeThisUser)
+        if utils.hasItems(removeTheseUserIds):
+            for userId in removeTheseUserIds:
+                del userIdsToChannels[userId]
+                del userIdsToUsers[userId]
 
-        if not utils.hasItems(liveTwitchUsers):
+        if not utils.hasItems(userIdsToChannels) or not utils.hasItems(userIdsToUsers):
             return
 
-        for liveTwitchUser in liveTwitchUsers:
-            twitchAnnounceServers = self.__twitchAnnounceSettingsHelper.getTwitchAnnounceServersForUser(
-                discordUserId = liveTwitchUser.getDiscordId()
-            )
+        users = list[User]()
+        for user in userIdsToUsers.values():
+            users.append(user)
 
-            if not utils.hasItems(twitchAnnounceServers):
-                continue
+        whoIsLive = self.__twitchLiveHelper.whoIsLive(users)
 
-            for twitchAnnounceServer in twitchAnnounceServers:
-                channel = self.__fetchChannel(twitchAnnounceServer.getDiscordChannelId())
-                guildMember = await channel.guild.fetch_member(liveTwitchUser.getDiscordId())
+        for user in whoIsLive:
+            self.__liveTwitchUsersAnnounceTimes[user.getDiscordId()] = now + timedelta(minutes = self.__twitchAnnounceSettingsHelper.getAnnounceFalloffMinutes())
+
+        for user in whoIsLive:
+            userChannels = userIdsToChannels[user.getDiscordId()]
+
+            for userChannel in userChannels:
+                channel = self.__fetchChannel(userChannel.getDiscordChannelId())
+                guildMember = await channel.guild.fetch_member(user.getDiscordId())
 
                 if guildMember is not None:
-                    await channel.send(f'{liveTwitchUser.getDiscordName()} is now live! https://twitch.tv/{liveTwitchUser.getTwitchName()}')
+                    await channel.send(f'{user.getDiscordName()} is now live! https://twitch.tv/{user.getTwitchName()}')
 
     async def __createPriorityStockAvailableMessageText(
         self,
@@ -333,17 +349,17 @@ class CynanBotDiscord(commands.Bot):
             return
 
         users = self.__analogueSettingsHelper.getUsersToNotify()
-
-        if utils.hasItems(users):
-            userNames = list()
-
-            for user in users:
-                userNames.append(f'`{user.getNameAndDiscriminator()}`')
-
-            userNamesString = ', '.join(userNames)
-            await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
-        else:
+        if not utils.hasItems(users):
             await ctx.send('no users are set to be notified when priority Analogue products are available')
+            return
+
+        userNames = list()
+
+        for user in users:
+            userNames.append(f'`{user.getNameAndDiscriminator()}`')
+
+        userNamesString = ', '.join(userNames)
+        await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
 
     async def listTwitchUsers(self, ctx):
         if ctx is None:
@@ -354,7 +370,20 @@ class CynanBotDiscord(commands.Bot):
         if not self.__isAuthorAdministrator(ctx):
             return
 
-        # TODO
+        twitchAnnounceChannel = self.__twitchAnnounceChannelsRepository.fetchTwitchAnnounceChannel(ctx.channel.id)
+        if not twitchAnnounceChannel.hasUsers():
+            await ctx.send('no users are currently having their Twitch streams announced')
+            return
+
+        userNames = list()
+        for user in twitchAnnounceChannel.getUsers():
+            if user.hasTwitchName():
+                userNames.append(f'`{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()})')
+            else:
+                userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
+
+        userNamesString = ', '.join(userNames)
+        await ctx.send(f'users who are having their Twitch streams announced: {userNamesString}')
 
     async def listPriorityProducts(self, ctx):
         if ctx is None:
@@ -400,15 +429,19 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to remove')
             return
 
-        users = list()
+        userNames = list[str]()
 
         for mention in mentions:
-            user = self.__analogueSettingsHelper.removeUserFromUsersToNotify(int(mention.id))
+            user = User(
+                discordDiscriminator = int(mention.discriminator),
+                discordId = int(mention.id),
+                discordName = mention.name
+            )
 
-            if user is not None:
-                users.append(f'`{user.getNameAndDiscriminator()}`')
+            if self.__analogueSettingsHelper.removeUser(user):
+                userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
-        usersString = ', '.join(users)
+        usersString = ', '.join(userNames)
         print(f'Removed {usersString} from users to notify ({utils.getNowTimeText()})')
         await ctx.send(f'removed {usersString} from users to notify')
 
@@ -429,10 +462,13 @@ class CynanBotDiscord(commands.Bot):
         users = list()
 
         for mention in mentions:
-            user = self.__twitchAnnounceSettingsHelper.removeUserFromTwitchAnnounceUsers(
-                discordId = int(mention.id)
+            user = User(
+                discordDiscriminator = int(mention.discriminator),
+                discordId = int(mention.id),
+                discordName = mention.name
             )
 
+            self.__twitchAnnounceChannelsRepository.removeUser(user)
             users.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
         usersString = ', '.join(users)

@@ -5,8 +5,8 @@ from requests import ConnectionError, HTTPError, Timeout
 from urllib3.exceptions import MaxRetryError, NewConnectionError
 
 import CynanBotCommon.utils as utils
-from twitchAccounceSettingsHelper import TwitchAnnounceUser
 from twitchTokensRepository import TwitchTokensRepository
+from user import User
 
 
 class TwitchLiveHelper():
@@ -28,11 +28,13 @@ class TwitchLiveHelper():
         self.__clientSecret = clientSecret
         self.__twitchTokensRepository = twitchTokensRepository
 
-    def whoIsLive(self, users: List[TwitchAnnounceUser]) -> dict[TwitchAnnounceUser, bool]:
+    def whoIsLive(self, users: List[User]) -> List[User]:
         if not utils.hasItems(users):
             return None
+        elif len(users) > 100:
+            raise ValueError(f'more users than can be asked for from the Twitch API: \"{len(users)}\"')
 
-        userNamesList = list()
+        userNamesList = list[str]()
         for user in users:
             userNamesList.append(user.getTwitchName())
         userNames = ','.join(userNamesList)
@@ -52,10 +54,15 @@ class TwitchLiveHelper():
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
 
         jsonResponse = rawResponse.json()
-        print(jsonResponse)
 
-        isLiveDict = dict()
+        dataArray = jsonResponse['data']
+        whoIsLive = list[User]()
 
-        # TODO
+        for dataJson in dataArray:
+            userName = dataJson['user_name']
 
-        return isLiveDict
+            for user in users:
+                if userName.lower() == user.getTwitchName().lower():
+                    whoIsLive.append(user)
+
+        return whoIsLive

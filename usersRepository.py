@@ -43,7 +43,6 @@ class UsersRepository():
         connection.commit()
         cursor.close()
 
-
     def fetchUser(self, discordId: str) -> User:
         if not utils.isValidStr(discordId):
             raise ValueError(f'discordId argument is malformed: {discordId}')

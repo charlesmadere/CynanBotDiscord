@@ -3,15 +3,19 @@ from datetime import timedelta
 from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import AnalogueStoreRepository
+from CynanBotCommon.backingDatabase import BackingDatabase
 from cynanBotDiscord import CynanBotDiscord
 from generalSettingsHelper import GeneralSettingsHelper
-from twitchAccounceSettingsHelper import TwitchAnnounceSettingsHelper
+from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
+from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
 from twitchLiveHelper import TwitchLiveHelper
 from twitchTokensRepository import TwitchTokensRepository
+from usersRepository import UsersRepository
 
 
 analogueSettingsHelper = AnalogueSettingsHelper()
 authHelper = AuthHelper()
+backingDatabase = BackingDatabase()
 
 cynanBotDiscord = CynanBotDiscord(
     analogueSettingsHelper = AnalogueSettingsHelper(),
@@ -20,6 +24,12 @@ cynanBotDiscord = CynanBotDiscord(
     ),
     authHelper = authHelper,
     generalSettingsHelper = GeneralSettingsHelper(),
+    twitchAnnounceChannelsRepository = TwitchAnnounceChannelsRepository(
+        backingDatabase = backingDatabase,
+        usersRepository = UsersRepository(
+            backingDatabase = backingDatabase
+        )
+    ),
     twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper(),
     twitchLiveHelper = TwitchLiveHelper(
         clientId = authHelper.getTwitchClientId(),

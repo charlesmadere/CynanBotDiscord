@@ -40,6 +40,17 @@ class TwitchAnnounceChannelsRepository():
         self.__backingDatabase = backingDatabase
         self.__usersRepository = usersRepository
 
+        connection = self.__backingDatabase.getConnection()
+        connection.execute(
+            '''
+                CREATE TABLE IF NOT EXISTS twitchAnnounceChannels (
+                    discordChannelId TEXT NOT NULL COLLATE NOCASE
+                )
+            '''
+        )
+
+        connection.commit()
+
     def addUser(self, user: User, discordChannelId: int):
         if user is None:
             raise ValueError(f'user argument is malformed: \"{user}\"')
@@ -47,6 +58,18 @@ class TwitchAnnounceChannelsRepository():
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
 
         self.__usersRepository.addOrUpdateUser(user)
+
+        cursor = self.__backingDatabase.getConnection().cursor()
+        cursor.execute(
+            '''
+                INSERT INTO twitchAnnounceChannels (discordChannelId)
+                VALUES (?)
+                ON CONFLICT(discordChannelId) ABORT
+            ''',
+            ( discordChannelId, )
+        )
+
+        cursor.close()
 
         connection = self.__backingDatabase.getConnection()
         connection.execute(
@@ -71,7 +94,7 @@ class TwitchAnnounceChannelsRepository():
 
         cursor.close()
 
-    def getTwitchAnnounceChannel(self, discordChannelId: int) ->  TwitchAnnounceChannel:
+    def fetchTwitchAnnounceChannel(self, discordChannelId: int) ->  TwitchAnnounceChannel:
         if not utils.isValidNum(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
 
@@ -94,3 +117,37 @@ class TwitchAnnounceChannelsRepository():
             discordChannelId = discordChannelId,
             users = users
         )
+
+    def fetchTwitchAnnounceChannels(self) -> List[TwitchAnnounceChannel]:
+        cursor = self.__backingDatabase.getConnection().cursor()
+        cursor.execute(f'SELECT discordChannelId FROM twitchAnnounceChannels')
+        rows = cursor.fetchall()
+
+        if not utils.hasItems(rows):
+            cursor.close()
+            return None
+
+        twitchAnnounceChannels = list()
+
+        for row in rows:
+            twitchAnnounceChannel = self.fetchTwitchAnnounceChannel(row[0])
+            twitchAnnounceChannels.append(twitchAnnounceChannel)
+
+        return twitchAnnounceChannel
+
+    def removeUser(self, user: User, discordChannelId: int):
+        if user is None:
+            raise ValueError(f'user argument is malformed: \"{user}\"')
+        elif not utils.isValidNum(discordChannelId):
+            raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
+
+        cursor = self.__backingDatabase.getConnection().cursor()
+        cursor.execute(
+            f'''
+                DELETE FROM twitchAnnounceChannel_{discordChannelId}
+                WHERE discordUserId = ?
+            ''',
+            ( user.getDiscordId(), )
+        )
+
+        cursor.close()

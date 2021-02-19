@@ -24,14 +24,14 @@ class TwitchAnnounceSettingsHelper():
 
         return announceFalloffMinutes
 
-    def getRefreshEverySeconds(self) -> int:
+    def getRefreshEveryMinutes(self) -> int:
         jsonContents = self.__readJson()
-        refreshEverySeconds = utils.getIntFromDict(jsonContents, 'refreshEverySeconds')
+        refreshEveryMinutes = utils.getIntFromDict(jsonContents, 'refreshEveryMinutes')
 
-        if refreshEverySeconds < 300:
-            raise ValueError(f'\"refreshEverySeconds\" is too aggressive: {refreshEverySeconds}')
+        if refreshEveryMinutes < 5:
+            raise ValueError(f'\"refreshEveryMinutes\" is too aggressive: {refreshEveryMinutes}')
 
-        return refreshEverySeconds
+        return refreshEveryMinutes
 
     def __readJson(self) -> dict:
         if not os.path.exists(self.__twitchAnnounceSettingsFile):
