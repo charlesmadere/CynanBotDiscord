@@ -56,6 +56,11 @@ class TwitchLiveHelper():
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
 
         jsonResponse = rawResponse.json()
+
+        if 'error' in jsonResponse and len(jsonResponse['error']) >= 1 or 'data' not in jsonResponse:
+            print(f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
+            return None
+
         dataArray = jsonResponse['data']
         whoIsLive = list()
 
