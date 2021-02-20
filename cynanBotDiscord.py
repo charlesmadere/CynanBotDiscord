@@ -137,8 +137,8 @@ class CynanBotDiscord(commands.Bot):
 
         self.__twitchAnnounceChannelsRepository.addUser(user, ctx.channel.id)
 
-        print(f'Added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to twitch announce users ({utils.getNowTimeText()})')
-        await ctx.send(f'added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to twitch announce users')
+        print(f'Added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to Twitch announce users ({utils.getNowTimeText()})')
+        await ctx.send(f'added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to Twitch announce users')
 
     async def analogue(self, ctx):
         if ctx is None:
