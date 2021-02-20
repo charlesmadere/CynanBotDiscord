@@ -129,8 +129,8 @@ class CynanBotDiscord(commands.Bot):
             return
 
         user = User(
-            discordDiscriminator = int(mentions[0].discriminator),
             discordId = int(mentions[0].id),
+            discordDiscriminator = mentions[0].discriminator,
             discordName = mentions[0].name,
             twitchName = content[len(content) - 1]
         )

@@ -36,7 +36,7 @@ class UsersRepository():
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, twitchName = excluded.twitchName
             ''',
-            ( str(user.getDiscordDiscriminator()), str(user.getDiscordId()), user.getDiscordName(), user.getTwitchName() )
+            ( user.getDiscordDiscriminator(), str(user.getDiscordId()), user.getDiscordName(), user.getTwitchName() )
         )
         connection.commit()
         cursor.close()
@@ -61,8 +61,8 @@ class UsersRepository():
             raise ValueError(f'Unable to find user with discordId: \"{discordId}\"')
 
         user = User(
-            discordDiscriminator = int(row[0]),
             discordId = int(row[1]),
+            discordDiscriminator = row[0],
             discordName = row[2],
             twitchName = row[3]
         )
