@@ -243,7 +243,7 @@ class CynanBotDiscord(commands.Bot):
 
             for discordChannelId in discordChannelIds:
                 channel = await self.__fetchChannel(discordChannelId)
-                guildMember = await self.__fetchGuild(user.getDiscordId())
+                guildMember = await channel.guild.fetch_member(user.getDiscordId())
 
                 if guildMember is not None:
                     await channel.send(f'{user.getDiscordName()} is now live! https://twitch.tv/{user.getTwitchName()}')
