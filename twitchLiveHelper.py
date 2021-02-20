@@ -46,7 +46,7 @@ class TwitchLiveHelper():
             rawResponse = requests.get(
                 url = f'https://api.twitch.tv/helix/streams?user_login={userNames}',
                 headers = {
-                    'Client-ID': self.__clientId,
+                    'Client-Id': self.__clientId,
                     'Authorization': f'Bearer {self.__twitchTokensRepository.getAccessToken()}'
                 },
                 timeout = utils.getDefaultTimeout()
