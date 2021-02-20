@@ -1,4 +1,5 @@
 import asyncio
+import urllib
 from datetime import datetime, timedelta
 
 import discord
@@ -132,11 +133,24 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('example command: `!addTwitchUser @CynanBot cynanbot` (the last parameter is their ttv handle)')
             return
 
+        url = urllib.parse.urlparse(content[len(content) - 1])
+        twitchName = None
+
+        if '/' in url.path:
+            indexOfSlash = url.path.index('/')
+            twitchName = url.path[indexOfSlash + 1:len(url.path)]
+        else:
+            twitchName = url.path
+
+        if not utils.isValidStr(twitchName):
+            await ctx.send('example command: `!addTwitchUser @CynanBot cynanbot` (the last parameter is their ttv handle)')
+            return
+
         user = User(
             discordId = int(mentions[0].id),
             discordDiscriminator = mentions[0].discriminator,
             discordName = mentions[0].name,
-            twitchName = content[len(content) - 1]
+            twitchName = twitchName
         )
 
         self.__twitchAnnounceChannelsRepository.addUser(user, ctx.channel.id)
