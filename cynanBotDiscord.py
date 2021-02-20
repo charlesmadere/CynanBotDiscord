@@ -6,6 +6,7 @@ from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 
 import CynanBotCommon.utils as utils
+from analogueAnnounceChannelsRepository import AnalogueAnnounceChannelsRepository
 from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import (AnalogueStoreRepository,
@@ -21,6 +22,7 @@ class CynanBotDiscord(commands.Bot):
 
     def __init__(
         self,
+        analogueAnnounceChannelsRepository: AnalogueAnnounceChannelsRepository,
         analogueSettingsHelper: AnalogueSettingsHelper,
         analogueStoreRepository: AnalogueStoreRepository,
         authHelper: AuthHelper,
@@ -35,7 +37,9 @@ class CynanBotDiscord(commands.Bot):
             status = discord.Status.online
         )
 
-        if analogueSettingsHelper is None:
+        if analogueAnnounceChannelsRepository is None:
+            raise ValueError(f'analogueAnnounceChannelsRepository argument is malformed: \"{analogueAnnounceChannelsRepository}\"')
+        elif analogueSettingsHelper is None:
             raise ValueError(f'analogueSettingsHelper argument is malformed: \"{analogueSettingsHelper}\"')
         elif analogueStoreRepository is None:
             raise ValueError(f'analogueStoreRepository argument is malformed: \"{analogueStoreRepository}\"')
@@ -50,6 +54,7 @@ class CynanBotDiscord(commands.Bot):
         elif twitchLiveHelper is None:
             raise ValueError(f'twitchLiveHelper argument is malformed: \"{twitchLiveHelper}\"')
 
+        self.__analogueAnnounceChannelsRepository = analogueAnnounceChannelsRepository
         self.__analogueSettingsHelper = analogueSettingsHelper
         self.__analogueStoreRepository = analogueStoreRepository
         self.__authHelper = authHelper

@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from analogueAnnounceChannelsRepository import AnalogueAnnounceChannelsRepository
 from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import AnalogueStoreRepository
@@ -18,6 +19,9 @@ authHelper = AuthHelper()
 backingDatabase = BackingDatabase()
 
 cynanBotDiscord = CynanBotDiscord(
+    analogueAnnounceChannelsRepository = AnalogueAnnounceChannelsRepository(
+        backingDatabase = backingDatabase
+    ),
     analogueSettingsHelper = AnalogueSettingsHelper(),
     analogueStoreRepository = AnalogueStoreRepository(
         cacheTimeDelta = timedelta(seconds = analogueSettingsHelper.getAnalogueStoreCacheSeconds())
