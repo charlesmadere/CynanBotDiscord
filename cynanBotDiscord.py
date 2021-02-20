@@ -241,13 +241,19 @@ class CynanBotDiscord(commands.Bot):
 
         for user in whoIsLive:
             discordChannelIds = userIdsToChannels[user.getDiscordId()]
+            announceChannelNames = list()
 
             for discordChannelId in discordChannelIds:
                 channel = await self.__fetchChannel(discordChannelId)
                 guildMember = await channel.guild.fetch_member(user.getDiscordId())
 
                 if guildMember is not None:
+                    announceChannelNames.append(f'{channel.guild.name}:{channel.name}')
                     await channel.send(f'{user.getDiscordName()} is now live! https://twitch.tv/{user.getTwitchName()}')
+
+            if utils.hasItems(announceChannelNames):
+                channelNames = ', '.join(announceChannelNames)
+                print(f'Announced Twitch live stream for {user.getDiscordNameAndDiscriminator()} in {channelNames}')
 
     async def __createPriorityStockAvailableMessageText(
         self,
