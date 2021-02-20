@@ -211,19 +211,6 @@ class CynanBotDiscord(commands.Bot):
 
                     userIdsToChannels[user.getDiscordId()].add(twitchAnnounceChannel.getDiscordChannelId())
 
-        removeTheseUserIds = list()
-
-        for userId in userIdsToUsers:
-            lastAnnounceTime = self.__liveTwitchUsersAnnounceTimes.get(userId)
-
-            if lastAnnounceTime is not None and lastAnnounceTime >= now:
-                removeTheseUserIds.append(userId)
-
-        if utils.hasItems(removeTheseUserIds):
-            for userId in removeTheseUserIds:
-                del userIdsToChannels[userId]
-                del userIdsToUsers[userId]
-
         if not utils.hasItems(userIdsToChannels) or not utils.hasItems(userIdsToUsers):
             return
 
@@ -235,8 +222,22 @@ class CynanBotDiscord(commands.Bot):
         if not utils.hasItems(whoIsLive):
             return
 
+        removeTheseUsers = list()
+
         for user in whoIsLive:
+            lastAnnounceTime = self.__liveTwitchUsersAnnounceTimes.get(user.getDiscordId())
+
+            if lastAnnounceTime is not None and lastAnnounceTime >= now:
+                removeTheseUsers.append(user)
+
             self.__liveTwitchUsersAnnounceTimes[user.getDiscordId()] = now + timedelta(minutes = self.__twitchAnnounceSettingsHelper.getAnnounceFalloffMinutes())
+
+        if utils.hasItems(removeTheseUsers):
+            for removeThisUser in removeTheseUsers:
+                whoIsLive.remove(removeThisUser)
+
+        if not utils.hasItems(whoIsLive):
+            return
 
         for user in whoIsLive:
             discordChannelIds = userIdsToChannels[user.getDiscordId()]
