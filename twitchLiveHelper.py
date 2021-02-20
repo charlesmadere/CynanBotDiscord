@@ -60,12 +60,15 @@ class TwitchLiveHelper():
         if 'error' in jsonResponse and len(jsonResponse['error']) >= 1 or 'data' not in jsonResponse:
             print(f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
 
-            self.__twitchTokensRepository.validateAndRefreshAccessToken(
-                clientId = self.__clientId,
-                clientSecret = self.__clientSecret
-            )
+            if jsonResponse['error']['status'] == 401:
+                self.__twitchTokensRepository.validateAndRefreshAccessToken(
+                    clientId = self.__clientId,
+                    clientSecret = self.__clientSecret
+                )
 
-            return self.whoIsLive(users)
+                return self.whoIsLive(users)
+            else:
+                raise RuntimeError(f'Unknown error returned by Twitch API')
 
         dataArray = jsonResponse['data']
         whoIsLive = list()
