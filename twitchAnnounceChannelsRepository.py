@@ -115,6 +115,10 @@ class TwitchAnnounceChannelsRepository():
 
         for row in rows:
             user = self.__usersRepository.fetchUser(row[0])
+
+            if not user.hasTwitchName():
+                raise RuntimeError(f'Twitch announce user {user.getDiscordNameAndDiscriminator()} has no Twitch name!')
+
             users.append(user)
             cursor.close()
 
