@@ -372,10 +372,10 @@ class CynanBotDiscord(commands.Bot):
 
         userNames = list()
         for user in users:
-            userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
+            userNames.append(f' - `{user.getDiscordNameAndDiscriminator()}`')
 
-        userNamesString = ', '.join(userNames)
-        await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
+        userNamesString = '\n'.join(userNames)
+        await ctx.send(f'users who will be notified when priority Analogue products are available:\n{userNamesString}')
 
     async def listTwitchUsers(self, ctx):
         if ctx is None:
@@ -388,18 +388,18 @@ class CynanBotDiscord(commands.Bot):
 
         twitchAnnounceChannel = self.__twitchAnnounceChannelsRepository.fetchTwitchAnnounceChannel(ctx.channel.id)
         if twitchAnnounceChannel is None or not twitchAnnounceChannel.hasUsers():
-            await ctx.send('no users are currently having their Twitch streams announced')
+            await ctx.send('no users are currently having their Twitch streams announced in this channel')
             return
 
         userNames = list()
         for user in twitchAnnounceChannel.getUsers():
             if user.hasTwitchName():
-                userNames.append(f'`{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()})')
+                userNames.append(f' - `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()})')
             else:
-                userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
+                userNames.append(f' - `{user.getDiscordNameAndDiscriminator()}`')
 
-        userNamesString = ', '.join(userNames)
-        await ctx.send(f'users who are having their Twitch streams announced: {userNamesString}')
+        userNamesString = '\n'.join(userNames)
+        await ctx.send(f'users who are having their Twitch streams announced in this channel:\n{userNamesString}')
 
     async def listPriorityProducts(self, ctx):
         if ctx is None:
