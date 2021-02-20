@@ -4,24 +4,24 @@ class User():
 
     def __init__(
         self,
-        discordDiscriminator: int,
         discordId: int,
+        discordDiscriminator: str,
         discordName: str,
         twitchName: str = None
     ):
-        if not utils.isValidNum(discordDiscriminator):
-            raise ValueError(f'discordDiscriminator argument is malformed: \"{discordDiscriminator}\"')
-        elif not utils.isValidNum(discordId):
+        if not utils.isValidNum(discordId):
             raise ValueError(f'discordId argument is malformed: \"{discordId}\"')
+        elif not utils.isValidStr(discordDiscriminator):
+            raise ValueError(f'discordDiscriminator argument is malformed: \"{discordDiscriminator}\"')
         elif not utils.isValidStr(discordName):
             raise ValueError(f'discordName argument is malformed: \"{discordName}\"')
 
-        self.__discordDiscriminator = discordDiscriminator
         self.__discordId = discordId
+        self.__discordDiscriminator = discordDiscriminator
         self.__discordName = discordName
         self.__twitchName = twitchName
 
-    def getDiscordDiscriminator(self) -> int:
+    def getDiscordDiscriminator(self) -> str:
         return self.__discordDiscriminator
 
     def getDiscordId(self) -> int:

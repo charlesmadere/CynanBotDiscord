@@ -93,8 +93,8 @@ class CynanBotDiscord(commands.Bot):
         userNames = list()
         for mention in mentions:
             user = User(
-                discordDiscriminator = int(mention.discriminator),
                 discordId = mention.id,
+                discordDiscriminator = mention.discriminator,
                 discordName = mention.name
             )
 
@@ -438,8 +438,8 @@ class CynanBotDiscord(commands.Bot):
 
         for mention in mentions:
             user = User(
-                discordDiscriminator = int(mention.discriminator),
                 discordId = mention.id,
+                discordDiscriminator = mention.discriminator,
                 discordName = mention.name
             )
 
@@ -467,8 +467,8 @@ class CynanBotDiscord(commands.Bot):
         userNames = list()
         for mention in mentions:
             user = User(
-                discordDiscriminator = int(mention.discriminator),
                 discordId = mention.id,
+                discordDiscriminator = mention.discriminator,
                 discordName = mention.name
             )
 
