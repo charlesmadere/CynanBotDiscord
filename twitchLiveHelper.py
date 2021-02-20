@@ -60,7 +60,7 @@ class TwitchLiveHelper():
         if 'error' in jsonResponse and len(jsonResponse['error']) >= 1 or 'data' not in jsonResponse:
             print(f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
 
-            if jsonResponse['error']['status'] == 401:
+            if 'status' in jsonResponse and jsonResponse['status'] == 401:
                 self.__twitchTokensRepository.validateAndRefreshAccessToken(
                     clientId = self.__clientId,
                     clientSecret = self.__clientSecret
