@@ -59,7 +59,13 @@ class TwitchLiveHelper():
 
         if 'error' in jsonResponse and len(jsonResponse['error']) >= 1 or 'data' not in jsonResponse:
             print(f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
-            return None
+
+            self.__twitchTokensRepository.validateAndRefreshAccessToken(
+                clientId = self.__clientId,
+                clientSecret = self.__clientSecret
+            )
+
+            return self.whoIsLive(users)
 
         dataArray = jsonResponse['data']
         whoIsLive = list()

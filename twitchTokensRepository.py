@@ -12,11 +12,19 @@ class TwitchTokensRepository():
 
     def __init__(
         self,
+        oauth2TokenUrl: str = 'https://id.twitch.tv/oauth2/token',
+        oauth2ValidateUrl: str = 'https://id.twitch.tv/oauth2/validate',
         twitchTokensFile: str = 'twitchTokensRepository.json'
     ):
-        if not utils.isValidStr(twitchTokensFile):
+        if not utils.isValidUrl(oauth2TokenUrl):
+            raise ValueError(f'oauth2TokenUrl argument is malformed: \"{oauth2TokenUrl}\"')
+        elif not utils.isValidUrl(oauth2ValidateUrl):
+            raise ValueError(f'oauth2ValidateUrl argument is malformed: \"{oauth2ValidateUrl}\"')
+        elif not utils.isValidStr(twitchTokensFile):
             raise ValueError(f'twitchTokensFile argument is malformed: \"{twitchTokensFile}\"')
 
+        self.__oauth2TokenUrl = oauth2TokenUrl
+        self.__oauth2ValidateUrl = oauth2ValidateUrl
         self.__twitchTokensFile = twitchTokensFile
 
     def getAccessToken(self) -> str:
@@ -51,7 +59,7 @@ class TwitchTokensRepository():
 
         return jsonContents
 
-    def refreshTokens(
+    def __refreshTokens(
         self,
         clientId: str,
         clientSecret: str
@@ -66,7 +74,7 @@ class TwitchTokensRepository():
         rawResponse = None
         try:
             rawResponse = requests.post(
-                url = self.oauth2TokenUrl,
+                url = self.__oauth2TokenUrl,
                 params = {
                     'client_id': clientId,
                     'client_secret': clientSecret,
@@ -94,3 +102,28 @@ class TwitchTokensRepository():
             json.dump(jsonContents, file, indent = 4, sort_keys = True)
 
         print(f'Saved new Twitch tokens ({utils.getNowTimeText(includeSeconds = True)})')
+
+    def validateAndRefreshAccessToken(
+        self,
+        clientId: str,
+        clientSecret: str
+    ):
+        print(f'Validating Twitch access token... ({utils.getNowTimeText(includeSeconds = True)})')
+
+        rawResponse = None
+        try:
+            rawResponse = requests.get(
+                url = self.__oauth2ValidateUrl,
+                params = {
+                    'Authorization': f'OAuth {self.getAccessToken()}'
+                },
+                timeout = utils.getDefaultTimeout()
+            )
+        except (ConnectionError, HTTPError, MaxRetryError, NewConnectionError, Timeout) as e:
+            print(f'Exception occurred when attempting to validate Twitch access token: {e}')
+            raise RuntimeError(f'Exception occurred when attempting to validate Twitch access token: {e}')
+
+        jsonResponse = rawResponse.json()
+
+        if jsonResponse.get('client_id') is None or len(jsonResponse['client_id']) == 0:
+            self.__refreshTokens(clientId = clientId, clientSecret = clientSecret)
