@@ -22,7 +22,7 @@ cynanBotDiscord = CynanBotDiscord(
     analogueAnnounceChannelsRepository = AnalogueAnnounceChannelsRepository(
         backingDatabase = backingDatabase
     ),
-    analogueSettingsHelper = AnalogueSettingsHelper(),
+    analogueSettingsHelper = analogueSettingsHelper,
     analogueStoreRepository = AnalogueStoreRepository(
         cacheTimeDelta = timedelta(seconds = analogueSettingsHelper.getAnalogueStoreCacheSeconds())
     ),
