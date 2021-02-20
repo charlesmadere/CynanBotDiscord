@@ -239,10 +239,10 @@ class CynanBotDiscord(commands.Bot):
             self.__liveTwitchUsersAnnounceTimes[user.getDiscordId()] = now + timedelta(minutes = self.__twitchAnnounceSettingsHelper.getAnnounceFalloffMinutes())
 
         for user in whoIsLive:
-            userChannels = userIdsToChannels[user.getDiscordId()]
+            discordChannelIds = userIdsToChannels[user.getDiscordId()]
 
-            for userChannel in userChannels:
-                channel = self.__fetchChannel(userChannel.getDiscordChannelId())
+            for discordChannelId in discordChannelIds:
+                channel = self.__fetchChannel(discordChannelId)
                 guildMember = await channel.guild.fetch_member(user.getDiscordId())
 
                 if guildMember is not None:
