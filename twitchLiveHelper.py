@@ -39,7 +39,7 @@ class TwitchLiveHelper():
         userNamesList = list()
         for user in users:
             userNamesList.append(user.getTwitchName())
-        userNames = ','.join(userNamesList)
+        userNames = '&user_login='.join(userNamesList)
 
         rawResponse = None
         try:
