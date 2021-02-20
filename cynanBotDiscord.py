@@ -182,7 +182,7 @@ class CynanBotDiscord(commands.Bot):
 
         if utils.isValidStr(text):
             print(f'Sending Analogue stock message ({utils.getNowTimeText(includeSeconds = True)}):\n{text}')
-            channel = self.__fetchChannel(channelId)
+            channel = await self.__fetchChannel(channelId)
             await channel.send(text)
 
     async def __checkTwitchStreams(self):
@@ -242,7 +242,7 @@ class CynanBotDiscord(commands.Bot):
             discordChannelIds = userIdsToChannels[user.getDiscordId()]
 
             for discordChannelId in discordChannelIds:
-                channel = self.__fetchChannel(discordChannelId)
+                channel = await self.__fetchChannel(discordChannelId)
                 guildMember = await channel.guild.fetch_member(user.getDiscordId())
 
                 if guildMember is not None:
@@ -285,7 +285,7 @@ class CynanBotDiscord(commands.Bot):
 
         usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
         if utils.hasItems(usersToNotify):
-            guild = self.__fetchGuild(channelId)
+            guild = await self.__fetchGuild(channelId)
 
             for user in usersToNotify:
                 guildMember = await guild.fetch_member(user.getId())
@@ -313,7 +313,7 @@ class CynanBotDiscord(commands.Bot):
 
         await self.wait_until_ready()
 
-        channel = self.__fetchChannel(channelId)
+        channel = await self.__fetchChannel(channelId)
         guild = channel.guild
 
         if guild is None:
