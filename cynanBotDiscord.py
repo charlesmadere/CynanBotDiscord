@@ -11,8 +11,7 @@ from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import (AnalogueStoreRepository,
                                                     AnalogueStoreStock)
 from generalSettingsHelper import GeneralSettingsHelper
-from twitchAnnounceChannelsRepository import (TwitchAnnounceChannel,
-                                              TwitchAnnounceChannelsRepository)
+from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
 from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
 from twitchLiveHelper import TwitchLiveHelper
 from user import User
