@@ -232,6 +232,8 @@ class CynanBotDiscord(commands.Bot):
             users.append(user)
 
         whoIsLive = self.__twitchLiveHelper.whoIsLive(users)
+        if not utils.hasItems(whoIsLive):
+            return
 
         for user in whoIsLive:
             self.__liveTwitchUsersAnnounceTimes[user.getDiscordId()] = now + timedelta(minutes = self.__twitchAnnounceSettingsHelper.getAnnounceFalloffMinutes())
