@@ -252,7 +252,7 @@ class CynanBotDiscord(commands.Bot):
 
         if utils.hasItems(removeTheseUsers):
             for removeThisUser in removeTheseUsers:
-                whoIsLive.remove(removeThisUser)
+                del whoIsLive[removeThisUser]
 
         if not utils.hasItems(whoIsLive):
             return
