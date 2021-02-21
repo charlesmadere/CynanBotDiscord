@@ -74,11 +74,14 @@ class TwitchLiveHelper():
         whoIsLive = list()
 
         for dataJson in dataArray:
-            userName = dataJson['user_name']
+            streamType = dataJson.get('type')
 
-            for user in users:
-                if userName.lower() == user.getTwitchName().lower():
-                    whoIsLive.append(user)
+            if utils.isValidStr(streamType) and streamType.lower() == 'live':
+                userName = dataJson['user_name'].lower()
+
+                for user in users:
+                    if userName == user.getTwitchName().lower():
+                        whoIsLive.append(user)
 
         print(f'Number of users live on Twitch: {len(whoIsLive)}')
         return whoIsLive
