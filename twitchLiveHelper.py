@@ -71,6 +71,9 @@ class TwitchLiveHelper():
                 raise RuntimeError(f'Unknown error returned by Twitch API')
 
         dataArray = jsonResponse['data']
+        if not utils.hasItems(dataArray):
+            return None
+
         whoIsLive = list()
 
         for dataJson in dataArray:
