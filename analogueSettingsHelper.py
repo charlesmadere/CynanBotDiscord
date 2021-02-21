@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Iterable, List
+from typing import Dict, Iterable, List
 
 import CynanBotCommon.utils as utils
 from CynanBotCommon.analogueStoreRepository import AnalogueProductType
@@ -111,7 +111,7 @@ class AnalogueSettingsHelper():
 
         return users
 
-    def __readJson(self) -> dict:
+    def __readJson(self) -> Dict:
         if not os.path.exists(self.__analogueSettingsFile):
             raise FileNotFoundError(f'Analogue settings file not found: \"{self.__analogueSettingsFile}\"')
 
@@ -147,7 +147,7 @@ class AnalogueSettingsHelper():
         else:
             return False
 
-    def __userToJson(self, user: User) -> dict:
+    def __userToJson(self, user: User) -> Dict:
         if user is None:
             raise ValueError(f'user argument is malformed: \"{user}\"')
 

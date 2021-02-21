@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 import requests
 from requests import ConnectionError, HTTPError, Timeout
@@ -123,7 +123,7 @@ class TwitchLiveHelper():
         self.__clientSecret = clientSecret
         self.__twitchTokensRepository = twitchTokensRepository
 
-    def whoIsLive(self, users: List[User]) -> dict[User, TwitchLiveData]:
+    def whoIsLive(self, users: List[User]) -> Dict[User, TwitchLiveData]:
         if not utils.hasItems(users):
             return None
         elif len(users) > 100:

@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Dict
 
 import requests
 from requests import ConnectionError, HTTPError, Timeout
@@ -45,7 +46,7 @@ class TwitchTokensRepository():
 
         return refreshToken
 
-    def __readJson(self) -> dict:
+    def __readJson(self) -> Dict:
         if not os.path.exists(self.__twitchTokensFile):
             raise FileNotFoundError(f'Twitch tokens file not found: \"{self.__twitchTokensFile}\"')
 

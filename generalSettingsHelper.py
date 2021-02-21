@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Dict
 
 import CynanBotCommon.utils as utils
 
@@ -19,7 +20,7 @@ class GeneralSettingsHelper():
         jsonContents = self.__readJson()
         return utils.getIntFromDict(jsonContents, 'refreshEverySeconds')
 
-    def __readJson(self) -> dict:
+    def __readJson(self) -> Dict:
         if not os.path.exists(self.__generalSettingsFile):
             raise FileNotFoundError(f'generalSettingsFile not found: \"{self.__generalSettingsFile}\"')
 

@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Dict
 
 import CynanBotCommon.utils as utils
 
@@ -33,7 +34,7 @@ class TwitchAnnounceSettingsHelper():
 
         return refreshEveryMinutes
 
-    def __readJson(self) -> dict:
+    def __readJson(self) -> Dict:
         if not os.path.exists(self.__twitchAnnounceSettingsFile):
             raise FileNotFoundError(f'Twitch announce settings file not found: \"{self.__twitchAnnounceSettingsFile}\"')
 
