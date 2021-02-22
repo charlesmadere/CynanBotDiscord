@@ -17,10 +17,14 @@ from usersRepository import UsersRepository
 analogueSettingsHelper = AnalogueSettingsHelper()
 authHelper = AuthHelper()
 backingDatabase = BackingDatabase()
+usersRepository = UsersRepository(
+    backingDatabase = backingDatabase
+)
 
 cynanBotDiscord = CynanBotDiscord(
     analogueAnnounceChannelsRepository = AnalogueAnnounceChannelsRepository(
-        backingDatabase = backingDatabase
+        backingDatabase = backingDatabase,
+        usersRepository = usersRepository
     ),
     analogueSettingsHelper = analogueSettingsHelper,
     analogueStoreRepository = AnalogueStoreRepository(
@@ -30,14 +34,12 @@ cynanBotDiscord = CynanBotDiscord(
     generalSettingsHelper = GeneralSettingsHelper(),
     twitchAnnounceChannelsRepository = TwitchAnnounceChannelsRepository(
         backingDatabase = backingDatabase,
-        usersRepository = UsersRepository(
-            backingDatabase = backingDatabase
-        )
+        usersRepository = usersRepository
     ),
     twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper(),
     twitchLiveHelper = TwitchLiveHelper(
-        clientId = authHelper.getTwitchClientId(),
-        clientSecret = authHelper.getTwitchClientSecret(),
+        twitchClientId = authHelper.getTwitchClientId(),
+        twitchClientSecret = authHelper.getTwitchClientSecret(),
         twitchTokensRepository = TwitchTokensRepository()
     )
 )
@@ -53,6 +55,10 @@ cynanBotDiscord = CynanBotDiscord(
 ###################################################################################################
 
 @cynanBotDiscord.command()
+async def addAnaloguePriorityProduct(ctx, *args):
+    await cynanBotDiscord.addAnaloguePriorityProduct(ctx)
+
+@cynanBotDiscord.command()
 async def addAnalogueUser(ctx, *args):
     await cynanBotDiscord.addAnalogueUser(ctx)
 
@@ -65,16 +71,20 @@ async def analogue(ctx, *args):
     await cynanBotDiscord.analogue(ctx)
 
 @cynanBotDiscord.command()
+async def listAnaloguePriorityProducts(ctx, *args):
+    await cynanBotDiscord.listAnaloguePriorityProducts(ctx)
+
+@cynanBotDiscord.command()
 async def listAnalogueUsers(ctx, *args):
     await cynanBotDiscord.listAnalogueUsers(ctx)
 
 @cynanBotDiscord.command()
-async def listPriorityProducts(ctx, *args):
-    await cynanBotDiscord.listPriorityProducts(ctx)
-
-@cynanBotDiscord.command()
 async def listTwitchUsers(ctx, *args):
     await cynanBotDiscord.listTwitchUsers(ctx)
+
+@cynanBotDiscord.command()
+async def removeAnaloguePriorityProduct(ctx, *args):
+    await cynanBotDiscord.removeAnaloguePriorityProduct(ctx)
 
 @cynanBotDiscord.command()
 async def removeAnalogueUser(ctx, *args):

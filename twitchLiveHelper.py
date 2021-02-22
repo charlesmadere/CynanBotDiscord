@@ -1,3 +1,4 @@
+from json.decoder import JSONDecodeError
 from typing import Dict, List
 
 import requests
@@ -108,19 +109,19 @@ class TwitchLiveHelper():
 
     def __init__(
         self,
-        clientId: str,
-        clientSecret: str,
+        twitchClientId: str,
+        twitchClientSecret: str,
         twitchTokensRepository: TwitchTokensRepository
     ):
-        if not utils.isValidStr(clientId):
-            raise ValueError(f'clientId argument is malformed: \"{clientId}\"')
-        elif not utils.isValidStr(clientSecret):
-            raise ValueError(f'clientSecret argument is malformed: \"{clientSecret}\"')
+        if not utils.isValidStr(twitchClientId):
+            raise ValueError(f'twitchClientId argument is malformed: \"{twitchClientId}\"')
+        elif not utils.isValidStr(twitchClientSecret):
+            raise ValueError(f'twitchClientSecret argument is malformed: \"{twitchClientSecret}\"')
         elif twitchTokensRepository is None:
             raise ValueError(f'twitchTokensRepository argument is malformed: \"{twitchTokensRepository}\"')
 
-        self.__clientId = clientId
-        self.__clientSecret = clientSecret
+        self.__twitchClientId = twitchClientId
+        self.__twitchClientSecret = twitchClientSecret
         self.__twitchTokensRepository = twitchTokensRepository
 
     def whoIsLive(self, users: List[User]) -> Dict[User, TwitchLiveData]:
@@ -141,7 +142,7 @@ class TwitchLiveHelper():
             rawResponse = requests.get(
                 url = f'https://api.twitch.tv/helix/streams?user_login={userNames}',
                 headers = {
-                    'Client-Id': self.__clientId,
+                    'Client-Id': self.__twitchClientId,
                     'Authorization': f'Bearer {self.__twitchTokensRepository.getAccessToken()}'
                 },
                 timeout = utils.getDefaultTimeout()
@@ -150,15 +151,20 @@ class TwitchLiveHelper():
             print(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
 
-        jsonResponse = rawResponse.json()
+        jsonResponse = None
+        try:
+            jsonResponse = rawResponse.json()
+        except JSONDecodeError as e:
+            print(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
+            raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
 
         if 'error' in jsonResponse and len(jsonResponse['error']) >= 1 or 'data' not in jsonResponse:
             print(f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
 
             if 'status' in jsonResponse and jsonResponse['status'] == 401:
                 self.__twitchTokensRepository.validateAndRefreshAccessToken(
-                    clientId = self.__clientId,
-                    clientSecret = self.__clientSecret
+                    clientId = self.__twitchClientId,
+                    clientSecret = self.__twitchClientSecret
                 )
 
                 return self.whoIsLive(users)

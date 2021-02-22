@@ -103,10 +103,10 @@ class TwitchAnnounceChannelsRepository():
         try:
             cursor.execute(f'SELECT discordUserId FROM twitchAnnounceChannel_{discordChannelId}')
         except OperationalError:
+            # this error can be safely ignored, it just means the above table doesn't exist
             return None
 
         rows = cursor.fetchall()
-
         if not utils.hasItems(rows):
             cursor.close()
             return TwitchAnnounceChannel(discordChannelId = discordChannelId)
@@ -162,6 +162,7 @@ class TwitchAnnounceChannelsRepository():
                 ( str(user.getDiscordId()), )
             )
         except OperationalError:
+            # this error can be safely ignored, it just means the above table doesn't exist
             pass
 
         connection.commit()

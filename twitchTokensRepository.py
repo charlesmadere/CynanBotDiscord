@@ -33,7 +33,7 @@ class TwitchTokensRepository():
         accessToken = jsonContents['accessToken']
 
         if not utils.isValidStr(accessToken):
-            raise ValueError(f'accessToken is malformed: \"{accessToken}\"')
+            raise ValueError(f'\"accessToken\" value in \"{self.__twitchTokensFile}\" is malformed: \"{accessToken}\"')
 
         return accessToken
 
@@ -42,7 +42,7 @@ class TwitchTokensRepository():
         refreshToken = jsonContents['refreshToken']
 
         if not utils.isValidStr(refreshToken):
-            raise ValueError(f'refreshToken is malformed: \"{refreshToken}\"')
+            raise ValueError(f'\"refreshToken\" value in \"{self.__twitchTokensFile}\" is malformed: \"{refreshToken}\"')
 
         return refreshToken
 
@@ -62,13 +62,13 @@ class TwitchTokensRepository():
 
     def __refreshTokens(
         self,
-        clientId: str,
-        clientSecret: str
+        twitchClientId: str,
+        twitchClientSecret: str
     ):
-        if not utils.isValidStr(clientId):
-            raise ValueError(f'clientId argument is malformed: \"{clientId}\"')
-        elif not utils.isValidStr(clientSecret):
-            raise ValueError(f'clientSecret argument is malformed: \"{clientSecret}\"')
+        if not utils.isValidStr(twitchClientId):
+            raise ValueError(f'twitchClientId argument is malformed: \"{twitchClientId}\"')
+        elif not utils.isValidStr(twitchClientSecret):
+            raise ValueError(f'twitchClientSecret argument is malformed: \"{twitchClientSecret}\"')
 
         print(f'Requesting new Twitch tokens... ({utils.getNowTimeText(includeSeconds = True)})')
 
@@ -77,11 +77,12 @@ class TwitchTokensRepository():
             rawResponse = requests.post(
                 url = self.__oauth2TokenUrl,
                 params = {
-                    'client_id': clientId,
-                    'client_secret': clientSecret,
+                    'client_id': twitchClientId,
+                    'client_secret': twitchClientSecret,
                     'grant_type': 'refresh_token',
                     'refresh_token': self.getRefreshToken()
-                }
+                },
+                timeout = utils.getDefaultTimeout()
             )
         except (ConnectionError, HTTPError, MaxRetryError, NewConnectionError, Timeout) as e:
             print(f'Exception occurred when attempting to request new Twitch tokens: {e}')
@@ -106,9 +107,14 @@ class TwitchTokensRepository():
 
     def validateAndRefreshAccessToken(
         self,
-        clientId: str,
-        clientSecret: str
+        twitchClientId: str,
+        twitchClientSecret: str
     ):
+        if not utils.isValidStr(twitchClientId):
+            raise ValueError(f'twitchClientId argument is malformed: \"{twitchClientId}\"')
+        elif not utils.isValidStr(twitchClientSecret):
+            raise ValueError(f'twitchClientSecret argument is malformed: \"{twitchClientSecret}\"')
+
         print(f'Validating Twitch access token... ({utils.getNowTimeText(includeSeconds = True)})')
 
         rawResponse = None
@@ -127,4 +133,7 @@ class TwitchTokensRepository():
         jsonResponse = rawResponse.json()
 
         if jsonResponse.get('client_id') is None or len(jsonResponse['client_id']) == 0:
-            self.__refreshTokens(clientId = clientId, clientSecret = clientSecret)
+            self.__refreshTokens(
+                twitchClientId = twitchClientId,
+                twitchClientSecret = twitchClientSecret
+            )

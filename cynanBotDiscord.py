@@ -81,6 +81,17 @@ class CynanBotDiscord(commands.Bot):
         print(f'{self.user} is ready!')
         self.loop.create_task(self.__refreshAnalogueStoreAndWait())
 
+    async def addAnaloguePriorityProduct(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
+        # TODO
+
     async def addAnalogueUser(self, ctx):
         if ctx is None:
             raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
@@ -267,7 +278,13 @@ class CynanBotDiscord(commands.Bot):
 
                 if guildMember is not None:
                     announceChannelNames.append(f'{channel.guild.name}:{channel.name}')
-                    await channel.send(f'{user.getDiscordName()} is now live! https://twitch.tv/{user.getTwitchName()}')
+
+                    streamDetailsText = '\n'
+                    twitchLiveData = whoIsLive[user]
+                    if twitchLiveData.hasGameName() and twitchLiveData.hasTitle():
+                        streamDetailsText = f'\n{twitchLiveData.getGameName()} — {twitchLiveData.getTitle()}'
+
+                    await channel.send(f'{user.getDiscordName()} is now live!{streamDetailsText}\nhttps://twitch.tv/{user.getTwitchName()}')
 
             if utils.hasItems(announceChannelNames):
                 channelNames = ', '.join(announceChannelNames)
@@ -313,7 +330,7 @@ class CynanBotDiscord(commands.Bot):
             guild = await self.__fetchGuild(channelId)
 
             for user in usersToNotify:
-                guildMember = await guild.fetch_member(user.getId())
+                guildMember = await guild.fetch_member(user.getDiscordId())
 
                 if guildMember is not None:
                     text = f'{text}\n - {guildMember.mention}'
@@ -369,6 +386,17 @@ class CynanBotDiscord(commands.Bot):
                     return True
 
         return False
+
+    async def listAnaloguePriorityProducts(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
+        # TODO
 
     async def listAnalogueUsers(self, ctx):
         if ctx is None:
@@ -444,6 +472,17 @@ class CynanBotDiscord(commands.Bot):
             await self.__checkAnalogueStoreStock()
             await self.__checkTwitchStreams()
             await asyncio.sleep(self.__generalSettingsHelper.getRefreshEverySeconds())
+
+    async def removeAnaloguePriorityProduct(self, ctx):
+        if ctx is None:
+            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
+
+        await self.wait_until_ready()
+
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
+        # TODO
 
     async def removeAnalogueUser(self, ctx):
         if ctx is None:

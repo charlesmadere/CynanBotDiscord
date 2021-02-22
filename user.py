@@ -1,5 +1,6 @@
 import CynanBotCommon.utils as utils
 
+
 class User():
 
     def __init__(
