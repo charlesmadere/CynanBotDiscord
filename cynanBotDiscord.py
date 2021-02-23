@@ -282,7 +282,7 @@ class CynanBotDiscord(commands.Bot):
                     streamDetailsText = '\n'
                     twitchLiveData = whoIsLive[user]
                     if twitchLiveData.hasGameName() and twitchLiveData.hasTitle():
-                        streamDetailsText = f'\n{twitchLiveData.getGameName()} — {twitchLiveData.getTitle()}'
+                        streamDetailsText = f' They\'re playing {twitchLiveData.getGameName()} — "{twitchLiveData.getTitle()}".'
 
                     await channel.send(f'{user.getDiscordName()} is now live!{streamDetailsText}\nhttps://twitch.tv/{user.getTwitchName()}')
 
