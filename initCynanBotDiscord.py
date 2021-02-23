@@ -5,12 +5,12 @@ from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
 from CynanBotCommon.analogueStoreRepository import AnalogueStoreRepository
 from CynanBotCommon.backingDatabase import BackingDatabase
+from CynanBotCommon.twitchTokensRepository import TwitchTokensRepository
 from cynanBotDiscord import CynanBotDiscord
 from generalSettingsHelper import GeneralSettingsHelper
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
 from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
 from twitchLiveHelper import TwitchLiveHelper
-from twitchTokensRepository import TwitchTokensRepository
 from usersRepository import UsersRepository
 
 

@@ -6,7 +6,7 @@ from requests import ConnectionError, HTTPError, Timeout
 from urllib3.exceptions import MaxRetryError, NewConnectionError
 
 import CynanBotCommon.utils as utils
-from twitchTokensRepository import TwitchTokensRepository
+from CynanBotCommon.twitchTokensRepository import TwitchTokensRepository
 from user import User
 
 
@@ -111,7 +111,8 @@ class TwitchLiveHelper():
         self,
         twitchClientId: str,
         twitchClientSecret: str,
-        twitchTokensRepository: TwitchTokensRepository
+        twitchTokensRepository: TwitchTokensRepository,
+        twitchHandle: str = 'CynanBot'
     ):
         if not utils.isValidStr(twitchClientId):
             raise ValueError(f'twitchClientId argument is malformed: \"{twitchClientId}\"')
@@ -119,10 +120,13 @@ class TwitchLiveHelper():
             raise ValueError(f'twitchClientSecret argument is malformed: \"{twitchClientSecret}\"')
         elif twitchTokensRepository is None:
             raise ValueError(f'twitchTokensRepository argument is malformed: \"{twitchTokensRepository}\"')
+        elif not utils.isValidStr(twitchHandle):
+            raise ValueError(f'twitchHandle argument is malformed: \"{twitchHandle}\"')
 
         self.__twitchClientId = twitchClientId
         self.__twitchClientSecret = twitchClientSecret
         self.__twitchTokensRepository = twitchTokensRepository
+        self.__twitchHandle = twitchHandle
 
     def whoIsLive(self, users: List[User]) -> Dict[User, TwitchLiveData]:
         if not utils.hasItems(users):
@@ -164,9 +168,11 @@ class TwitchLiveHelper():
             if 'status' in jsonResponse and jsonResponse['status'] == 401:
                 self.__twitchTokensRepository.validateAndRefreshAccessToken(
                     twitchClientId = self.__twitchClientId,
-                    twitchClientSecret = self.__twitchClientSecret
+                    twitchClientSecret = self.__twitchClientSecret,
+                    twitchHandle = self.__twitchHandle
                 )
 
+                # I guess this could be dangerous LOL but it works for now...
                 return self.whoIsLive(users)
             else:
                 raise RuntimeError(f'Unknown error returned by Twitch API')
