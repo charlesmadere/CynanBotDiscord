@@ -163,8 +163,8 @@ class TwitchLiveHelper():
 
             if 'status' in jsonResponse and jsonResponse['status'] == 401:
                 self.__twitchTokensRepository.validateAndRefreshAccessToken(
-                    clientId = self.__twitchClientId,
-                    clientSecret = self.__twitchClientSecret
+                    twitchClientId = self.__twitchClientId,
+                    twitchClientSecret = self.__twitchClientSecret
                 )
 
                 return self.whoIsLive(users)
