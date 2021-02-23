@@ -153,7 +153,7 @@ class AnalogueAnnounceChannelsRepository():
             cursor.execute(f'SELECT analoguePriorityProduct FROM analogueAnnounceChannelProducts_{discordChannelId}')
         except OperationalError:
             # this error can be safely ignored, it just means the above table doesn't exist
-            pass
+            return None
 
         rows = cursor.fetchall()
         analoguePriorityProducts = list()
