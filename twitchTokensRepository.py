@@ -1,5 +1,6 @@
 import json
 import os
+from json.decoder import JSONDecodeError
 from typing import Dict
 
 import requests
@@ -70,8 +71,6 @@ class TwitchTokensRepository():
         elif not utils.isValidStr(twitchClientSecret):
             raise ValueError(f'twitchClientSecret argument is malformed: \"{twitchClientSecret}\"')
 
-        print(f'Requesting new Twitch tokens... ({utils.getNowTimeText(includeSeconds = True)})')
-
         rawResponse = None
         try:
             rawResponse = requests.post(
@@ -88,7 +87,12 @@ class TwitchTokensRepository():
             print(f'Exception occurred when attempting to request new Twitch tokens: {e}')
             raise RuntimeError(f'Exception occurred when attempting to request new Twitch tokens: {e}')
 
-        jsonResponse = rawResponse.json()
+        jsonResponse = None
+        try:
+            jsonResponse = rawResponse.json()
+        except JSONDecodeError as e:
+            print(f'Exception occurred when attempting to decode new Twitch tokens response into JSON: {e}')
+            raise RuntimeError(f'Exception occurred when attempting to decode new Twitch tokens response into JSON: {e}')
 
         if 'access_token' not in jsonResponse or len(jsonResponse['access_token']) == 0:
             raise ValueError(f'Received malformed \"access_token\" Twitch token: {jsonResponse}')
@@ -130,10 +134,19 @@ class TwitchTokensRepository():
             print(f'Exception occurred when attempting to validate Twitch access token: {e}')
             raise RuntimeError(f'Exception occurred when attempting to validate Twitch access token: {e}')
 
-        jsonResponse = rawResponse.json()
+        jsonResponse = None
+        try:
+            jsonResponse = rawResponse.json()
+        except JSONDecodeError as e:
+            print(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
+            raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
 
         if jsonResponse.get('client_id') is None or len(jsonResponse['client_id']) == 0:
+            print(f'Requesting new Twitch tokens... ({utils.getNowTimeText(includeSeconds = True)})')
+
             self.__refreshTokens(
                 twitchClientId = twitchClientId,
                 twitchClientSecret = twitchClientSecret
             )
+        else:
+            print(f'No need to request new Twitch tokens ({utils.getNowTimeText(includeSeconds = True)})')
