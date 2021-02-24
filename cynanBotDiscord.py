@@ -269,22 +269,33 @@ class CynanBotDiscord(commands.Bot):
             return
 
         for user in whoIsLive:
-            discordChannelIds = userIdsToChannels[user.getDiscordId()]
+            twitchLiveData = whoIsLive[user]
+
+            firstLineText = ''
+            if twitchLiveData.hasGameName():
+                firstLineText = f'{user.getDiscordName()} is now live with {twitchLiveData.getGameName()}!'
+            else:
+                firstLineText = f'{user.getDiscordName()} is now live!'
+
+            secondLineText = f' https://twitch.tv/{user.getTwitchName()}'
+
+            thirdLineText = ''
+            if twitchLiveData.hasTitle():
+                thirdLineText = f'\n> {twitchLiveData.getTitle()}'
+
+            discordAnnounceText = f'{firstLineText}{secondLineText}{thirdLineText}'
             announceChannelNames = list()
 
-            for discordChannelId in discordChannelIds:
+            for discordChannelId in userIdsToChannels[user.getDiscordId()]:
                 channel = await self.__fetchChannel(discordChannelId)
                 guildMember = await channel.guild.fetch_member(user.getDiscordId())
 
-                if guildMember is not None:
+                if guildMember is None:
+                    print(f'Couldn\'t find user ID {user.getDiscordId()} in guild {channel.guild.name}, removing them from this channel\'s Twitch announce users...')
+                    self.__twitchAnnounceChannelsRepository.removeUser(user, discordChannelId)
+                else:
                     announceChannelNames.append(f'{channel.guild.name}:{channel.name}')
-
-                    streamDetailsText = '\n'
-                    twitchLiveData = whoIsLive[user]
-                    if twitchLiveData.hasGameName() and twitchLiveData.hasTitle():
-                        streamDetailsText = f' They\'re playing {twitchLiveData.getGameName()} — "{twitchLiveData.getTitle()}".'
-
-                    await channel.send(f'{user.getDiscordName()} is now live!{streamDetailsText}\nhttps://twitch.tv/{user.getTwitchName()}')
+                    await channel.send(discordAnnounceText)
 
             if utils.hasItems(announceChannelNames):
                 channelNames = ', '.join(announceChannelNames)
