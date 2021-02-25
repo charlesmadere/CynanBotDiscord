@@ -16,9 +16,10 @@ class UsersRepository():
             '''
                 CREATE TABLE IF NOT EXISTS users (
                     discordDiscriminator TEXT NOT NULL COLLATE NOCASE,
-                    discordId TEXT NOT NULL PRIMARY KEY COLLATE NOCASE,
+                    discordId TEXT NOT NULL UNIQUE PRIMARY KEY COLLATE NOCASE,
                     discordName TEXT NOT NULL COLLATE NOCASE,
-                    twitchName TEXT DEFAULT NULL
+                    mostRecentStreamDateTime TEXT DEFAULT NULL COLLATE NOCASE,
+                    twitchName TEXT DEFAULT NULL COLLATE NOCASE
                 )
             '''
         )
@@ -32,11 +33,11 @@ class UsersRepository():
         cursor = connection.cursor()
         cursor.execute(
             '''
-                INSERT INTO users (discordDiscriminator, discordId, discordName, twitchName)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, twitchName = excluded.twitchName
+                INSERT INTO users (discordDiscriminator, discordId, discordName, mostRecentStreamDateTime, twitchName)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, mostRecentStreamDateTime = excluded.mostRecentStreamDateTime, twitchName = excluded.twitchName
             ''',
-            ( user.getDiscordDiscriminator(), str(user.getDiscordId()), user.getDiscordName(), user.getTwitchName() )
+            ( user.getDiscordDiscriminator(), str(user.getDiscordId()), user.getDiscordName(), user.getMostRecentStreamDateTimeStr(), user.getTwitchName() )
         )
         connection.commit()
         cursor.close()
@@ -48,7 +49,7 @@ class UsersRepository():
         cursor = self.__backingDatabase.getConnection().cursor()
         cursor.execute(
             '''
-                SELECT discordDiscriminator, discordId, discordName, twitchName FROM users 
+                SELECT discordDiscriminator, discordId, discordName, mostRecentStreamDateTime, twitchName FROM users 
                 WHERE discordId = ?
             ''',
             ( discordId, )
@@ -64,7 +65,8 @@ class UsersRepository():
             discordId = int(row[1]),
             discordDiscriminator = row[0],
             discordName = row[2],
-            twitchName = row[3]
+            mostRecentStreamDateTime = utils.getDateTimeFromStr(row[3]),
+            twitchName = row[4]
         )
 
         cursor.close()

@@ -41,7 +41,8 @@ cynanBotDiscord = CynanBotDiscord(
         twitchClientId = authHelper.getTwitchClientId(),
         twitchClientSecret = authHelper.getTwitchClientSecret(),
         twitchTokensRepository = TwitchTokensRepository()
-    )
+    ),
+    usersRepository = usersRepository
 )
 
 
