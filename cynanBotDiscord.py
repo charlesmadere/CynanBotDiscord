@@ -111,7 +111,6 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to add')
             return
 
-        userNames = list()
         for mention in mentions:
             user = User(
                 discordId = mention.id,
@@ -119,12 +118,9 @@ class CynanBotDiscord(commands.Bot):
                 discordName = mention.name
             )
 
-            self.__analogueSettingsHelper.addUser(user)
-            userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
+            self.__analogueAnnounceChannelsRepository.addUser(user, ctx.channel.id)
 
-        usersString = ', '.join(userNames)
-        print(f'Added {usersString} to users to notify ({utils.getNowTimeText()})')
-        await ctx.send(f'added {usersString} to users to notify')
+        print(f'Added Analogue user(s) to notify in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
 
     async def addTwitchUser(self, ctx):
         if ctx is None:
@@ -426,7 +422,17 @@ class CynanBotDiscord(commands.Bot):
         if not self.__isAuthorAdministrator(ctx):
             return
 
-        # TODO
+        analogueAnnounceChannel = self.__analogueAnnounceChannelsRepository.fetchAnalogueAnnounceChannel(ctx.channel.id)
+        if analogueAnnounceChannel is None or not analogueAnnounceChannel.hasAnaloguePriorityProducts():
+            await ctx.send('no priority Analogue products are being checked for in this channel')
+            return
+
+        productNames = list()
+        for product in analogueAnnounceChannel.getAnaloguePriorityProducts():
+            productNames.append(product.toStr())
+
+        productNamesString = '\n'.join(productNames)
+        await ctx.send(f'priority Analogue products in this channel:{productNamesString}')
 
     async def listAnalogueUsers(self, ctx):
         if ctx is None:
@@ -437,13 +443,13 @@ class CynanBotDiscord(commands.Bot):
         if not self.__isAuthorAdministrator(ctx):
             return
 
-        users = self.__analogueSettingsHelper.getUsersToNotify()
-        if not utils.hasItems(users):
-            await ctx.send('no users are set to be notified when priority Analogue products are available')
+        analogueAnnounceChannel = self.__analogueAnnounceChannelsRepository.fetchAnalogueAnnounceChannel(ctx.channel.id)
+        if analogueAnnounceChannel is None or not analogueAnnounceChannel.hasUsers():
+            await ctx.send('no users will be notified of priority Analogue products in this channel')
             return
 
         userNames = list()
-        for user in users:
+        for user in analogueAnnounceChannel.getUsers():
             userNames.append(f' - `{user.getDiscordNameAndDiscriminator()}`')
 
         userNamesString = '\n'.join(userNames)
@@ -528,8 +534,6 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to remove')
             return
 
-        userNames = list()
-
         for mention in mentions:
             user = User(
                 discordId = mention.id,
@@ -537,12 +541,9 @@ class CynanBotDiscord(commands.Bot):
                 discordName = mention.name
             )
 
-            if self.__analogueSettingsHelper.removeUser(user):
-                userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
+            self.__analogueAnnounceChannelsRepository.removeUser(user, ctx.channel.id)
 
-        usersString = ', '.join(userNames)
-        print(f'Removed {usersString} from users to notify ({utils.getNowTimeText()})')
-        await ctx.send(f'removed {usersString} from users to notify')
+        print(f'Removed Analogue user(s) to notify in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
 
     async def removeTwitchUser(self, ctx):
         if ctx is None:

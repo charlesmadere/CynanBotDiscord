@@ -57,7 +57,25 @@ class TwitchAnnounceChannelsRepository():
         elif not utils.isValidNum(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
 
+        self.__createTablesForDiscordChannelId(discordChannelId)
         self.__usersRepository.addOrUpdateUser(user)
+
+        connection = self.__backingDatabase.getConnection()
+        cursor = connection.cursor()
+        cursor.execute(
+            f'''
+                INSERT INTO twitchAnnounceChannel_{discordChannelId} (discordUserId)
+                VALUES (?)
+                ON CONFLICT (discordUserId) DO NOTHING
+            ''',
+            ( str(user.getDiscordId()), )
+        )
+        connection.commit()
+        cursor.close()
+
+    def __createTablesForDiscordChannelId(self, discordChannelId: int):
+        if not utils.isValidNum(discordChannelId):
+            raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
 
         connection = self.__backingDatabase.getConnection()
         cursor = connection.cursor()
@@ -81,18 +99,6 @@ class TwitchAnnounceChannelsRepository():
             '''
         )
         connection.commit()
-
-        cursor = connection.cursor()
-        cursor.execute(
-            f'''
-                INSERT INTO twitchAnnounceChannel_{discordChannelId} (discordUserId)
-                VALUES (?)
-                ON CONFLICT (discordUserId) DO NOTHING
-            ''',
-            ( str(user.getDiscordId()), )
-        )
-        connection.commit()
-        cursor.close()
 
     def fetchTwitchAnnounceChannel(self, discordChannelId: int) ->  TwitchAnnounceChannel:
         if not utils.isValidNum(discordChannelId):

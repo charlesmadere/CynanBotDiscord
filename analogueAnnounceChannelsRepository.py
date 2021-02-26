@@ -233,7 +233,7 @@ class AnalogueAnnounceChannelsRepository():
         connection.commit()
         cursor.close()
 
-    def removeUser(self, user: User, discordChannelId: int):
+    def removeUser(self, user: User, discordChannelId: int) -> bool:
         if user is None:
             raise ValueError(f'user argument is malformed: \"{user}\"')
         elif not utils.isValidNum(discordChannelId):
