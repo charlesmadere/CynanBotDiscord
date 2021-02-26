@@ -11,7 +11,7 @@ from analogueAnnounceChannelsRepository import (
     AnalogueAnnounceChannel, AnalogueAnnounceChannelsRepository)
 from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
-from CynanBotCommon.analogueStoreRepository import (AnalogueStoreRepository,
+from CynanBotCommon.analogueStoreRepository import (AnalogueProductType, AnalogueStoreRepository,
                                                     AnalogueStoreStock)
 from generalSettingsHelper import GeneralSettingsHelper
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
@@ -95,7 +95,18 @@ class CynanBotDiscord(commands.Bot):
         if not self.__isAuthorAdministrator(ctx):
             return
 
-        # TODO
+        content = utils.getCleanedSplits(ctx.message.content)
+        if not utils.hasItems(content) or len(content) < 2:
+            await ctx.send('please specify the name of the Analogue product you want to monitor for availability. example:\n`!addAnaloguePriorityProduct Super Nt`')
+            return
+
+        productNameString = ' '.join(content[1:])
+        analoguePriorityProduct = AnalogueProductType.fromStr(productNameString)
+
+        self.__analogueAnnounceChannelsRepository.addAnaloguePriorityProduct(
+            analoguePriorityProduct = analoguePriorityProduct,
+            discordChannelId = ctx.channel.id
+        )
 
     async def addAnalogueUser(self, ctx):
         if ctx is None:
@@ -429,10 +440,10 @@ class CynanBotDiscord(commands.Bot):
 
         productNames = list()
         for product in analogueAnnounceChannel.getAnaloguePriorityProducts():
-            productNames.append(product.toStr())
+            productNames.append(f'`{product.toStr()}`')
 
-        productNamesString = '\n'.join(productNames)
-        await ctx.send(f'priority Analogue products in this channel:{productNamesString}')
+        productNamesString = ', '.join(productNames)
+        await ctx.send(f'priority Analogue products in this channel: {productNamesString}')
 
     async def listAnalogueUsers(self, ctx):
         if ctx is None:
@@ -450,10 +461,10 @@ class CynanBotDiscord(commands.Bot):
 
         userNames = list()
         for user in analogueAnnounceChannel.getUsers():
-            userNames.append(f' - `{user.getDiscordNameAndDiscriminator()}`')
+            userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
-        userNamesString = '\n'.join(userNames)
-        await ctx.send(f'users who will be notified when priority Analogue products are available:\n{userNamesString}')
+        userNamesString = ', '.join(userNames)
+        await ctx.send(f'users who will be notified when priority Analogue products are available: {userNamesString}')
 
     async def listTwitchUsers(self, ctx):
         if ctx is None:
@@ -497,7 +508,7 @@ class CynanBotDiscord(commands.Bot):
                 productTypesStrings.append(f'`{productTypeString}`')
 
             productTypesString = ', '.join(productTypesStrings)
-            await ctx.send(f'Analogue products currently being monitored for availability: {productTypesString}')
+            await ctx.send(f'priority Analogue products currently being monitored for availability: {productTypesString}')
         else:
             await ctx.send('no Analogue products are currently being monitored for availability')
 
@@ -518,7 +529,18 @@ class CynanBotDiscord(commands.Bot):
         if not self.__isAuthorAdministrator(ctx):
             return
 
-        # TODO
+        content = utils.getCleanedSplits(ctx.message.content)
+        if not utils.hasItems(content) or len(content) < 2:
+            await ctx.send('please specify the name of the Analogue product you no longer want to be monitoring for availability. example:\n`!removeAnaloguePriorityProduct Super Nt`')
+            return
+
+        productNameString = ' '.join(content[1:])
+        analoguePriorityProduct = AnalogueProductType.fromStr(productNameString)
+
+        self.__analogueAnnounceChannelsRepository.removeAnaloguePriorityProduct(
+            analoguePriorityProduct = analoguePriorityProduct,
+            discordChannelId = ctx.channel.id
+        )
 
     async def removeAnalogueUser(self, ctx):
         if ctx is None:
