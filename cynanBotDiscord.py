@@ -455,7 +455,7 @@ class CynanBotDiscord(commands.Bot):
             return
 
         analogueAnnounceChannel = self.__analogueAnnounceChannelsRepository.fetchAnalogueAnnounceChannel(ctx.channel.id)
-        if analogueAnnounceChannel is None or not analogueAnnounceChannel.hasUsers():
+        if not analogueAnnounceChannel.hasUsers():
             await ctx.send('no users will be notified of priority Analogue products in this channel')
             return
 
