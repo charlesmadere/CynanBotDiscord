@@ -187,15 +187,14 @@ class CynanBotDiscord(commands.Bot):
 
         await self.wait_until_ready()
 
+        if not self.__isAuthorAdministrator(ctx):
+            return
+
         now = datetime.utcnow()
         if self.__lastAnalogueCommandMessageTime + self.__analogueCommandCoolDown >= now:
             return
 
         self.__lastAnalogueCommandMessageTime = now
-
-        analogueAnnounceChannel = self.__analogueAnnounceChannelsRepository.fetchAnalogueAnnounceChannel(ctx.channel.id)
-        if analogueAnnounceChannel is None:
-            return
 
         try:
             result = self.__analogueStoreRepository.fetchStoreStock()
