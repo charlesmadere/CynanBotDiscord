@@ -357,7 +357,7 @@ class CynanBotDiscord(commands.Bot):
         text = '**Priority items are in stock!**'
 
         for storeEntry in priorityEntriesInStock:
-            text = f'{text}\n - {storeEntry.getName()}'
+            text = f'{text}\n - {storeEntry.getName()} {storeEntry.getPrice()}'
 
         text = f'{text}\n<{self.__analogueStoreRepository.getStoreUrl()}>\n'
 
