@@ -361,11 +361,10 @@ class CynanBotDiscord(commands.Bot):
 
         text = f'{text}\n<{self.__analogueStoreRepository.getStoreUrl()}>\n'
 
-        usersToNotify = self.__analogueSettingsHelper.getUsersToNotify()
-        if utils.hasItems(usersToNotify):
+        if analogueAnnounceChannel.hasUsers():
             guild = await self.__fetchGuild(analogueAnnounceChannel.getDiscordChannelId())
 
-            for user in usersToNotify:
+            for user in analogueAnnounceChannel.getUsers():
                 guildMember = await guild.fetch_member(user.getDiscordId())
 
                 if guildMember is not None:
@@ -488,28 +487,6 @@ class CynanBotDiscord(commands.Bot):
 
         userNamesString = '\n'.join(userNames)
         await ctx.send(f'users who are having their Twitch streams announced in this channel:\n{userNamesString}')
-
-    async def listPriorityProducts(self, ctx):
-        if ctx is None:
-            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
-
-        await self.wait_until_ready()
-
-        if not self.__isAuthorAdministrator(ctx):
-            return
-
-        priorityStockProductTypes = self.__analogueSettingsHelper.getPriorityStockProductStrings()
-
-        if utils.hasItems(priorityStockProductTypes):
-            productTypesStrings = list()
-
-            for productTypeString in priorityStockProductTypes:
-                productTypesStrings.append(f'`{productTypeString}`')
-
-            productTypesString = ', '.join(productTypesStrings)
-            await ctx.send(f'priority Analogue products currently being monitored for availability: {productTypesString}')
-        else:
-            await ctx.send('no Analogue products are currently being monitored for availability')
 
     async def __refreshAnalogueStoreAndWait(self):
         await self.wait_until_ready()
