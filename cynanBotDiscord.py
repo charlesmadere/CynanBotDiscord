@@ -480,6 +480,9 @@ class CynanBotDiscord(commands.Bot):
 
         userNames = list()
         for user in twitchAnnounceChannel.getUsers():
+            # Every user retrieved here _should_ have a Twitch name, as we require it when
+            # entering them into the database as a Twitch announce user. But let's just be safe...
+
             if user.hasTwitchName():
                 userNames.append(f' - `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()})')
             else:
