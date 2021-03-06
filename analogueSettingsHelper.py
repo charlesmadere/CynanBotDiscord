@@ -3,7 +3,6 @@ import os
 from typing import Dict
 
 import CynanBotCommon.utils as utils
-from CynanBotCommon.analogueStoreRepository import AnalogueProductType
 
 
 class AnalogueSettingsHelper():
