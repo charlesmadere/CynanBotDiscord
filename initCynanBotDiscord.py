@@ -11,6 +11,7 @@ from generalSettingsHelper import GeneralSettingsHelper
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
 from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
 from twitchLiveHelper import TwitchLiveHelper
+from twitchLiveUsersRepository import TwitchLiveUsersRepository
 from usersRepository import UsersRepository
 
 
@@ -20,6 +21,11 @@ backingDatabase = BackingDatabase()
 usersRepository = UsersRepository(
     backingDatabase = backingDatabase
 )
+twitchAnnounceChannelsRepository = TwitchAnnounceChannelsRepository(
+    backingDatabase = backingDatabase,
+    usersRepository = usersRepository
+)
+twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper()
 
 cynanBotDiscord = CynanBotDiscord(
     analogueAnnounceChannelsRepository = AnalogueAnnounceChannelsRepository(
@@ -32,17 +38,18 @@ cynanBotDiscord = CynanBotDiscord(
     ),
     authHelper = authHelper,
     generalSettingsHelper = GeneralSettingsHelper(),
-    twitchAnnounceChannelsRepository = TwitchAnnounceChannelsRepository(
-        backingDatabase = backingDatabase,
+    twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository,
+    twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper,
+    twitchLiveUsersRepository = TwitchLiveUsersRepository(
+        twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository,
+        twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper,
+        twitchLiveHelper = TwitchLiveHelper(
+            twitchClientId = authHelper.getTwitchClientId(),
+            twitchClientSecret = authHelper.getTwitchClientSecret(),
+            twitchTokensRepository = TwitchTokensRepository()
+        ),
         usersRepository = usersRepository
-    ),
-    twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper(),
-    twitchLiveHelper = TwitchLiveHelper(
-        twitchClientId = authHelper.getTwitchClientId(),
-        twitchClientSecret = authHelper.getTwitchClientSecret(),
-        twitchTokensRepository = TwitchTokensRepository()
-    ),
-    usersRepository = usersRepository
+    )
 )
 
 

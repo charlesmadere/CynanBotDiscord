@@ -17,10 +17,8 @@ from CynanBotCommon.analogueStoreRepository import (AnalogueProductType,
 from generalSettingsHelper import GeneralSettingsHelper
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
 from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
-from twitchLiveHelper import TwitchLiveHelper
 from twitchLiveUsersRepository import TwitchLiveUsersRepository
 from user import User
-from usersRepository import UsersRepository
 
 
 class CynanBotDiscord(commands.Bot):
@@ -34,9 +32,7 @@ class CynanBotDiscord(commands.Bot):
         generalSettingsHelper: GeneralSettingsHelper,
         twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository,
         twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper,
-        twitchLiveHelper: TwitchLiveHelper,
-        twitchLiveUsersRepository: TwitchLiveUsersRepository,
-        usersRepository: UsersRepository
+        twitchLiveUsersRepository: TwitchLiveUsersRepository
     ):
         super().__init__(
             command_prefix = '!',
@@ -58,12 +54,8 @@ class CynanBotDiscord(commands.Bot):
             raise ValueError(f'twitchAnnounceChannelsRepository argument is malformed: \"{twitchAnnounceChannelsRepository}\"')
         elif twitchAnnounceSettingsHelper is None:
             raise ValueError(f'twitchAnnounceSttingsHelper argument is malformed: \"{twitchAnnounceSettingsHelper}\"')
-        elif twitchLiveHelper is None:
-            raise ValueError(f'twitchLiveHelper argument is malformed: \"{twitchLiveHelper}\"')
         elif twitchLiveUsersRepository:
             raise ValueError(f'twitchLiveUsersRepository argument is malformed: \"{twitchLiveUsersRepository}\"')
-        elif usersRepository is None:
-            raise ValueError(f'usersRepository argument is malformed: \"{usersRepository}\"')
 
         self.__analogueAnnounceChannelsRepository = analogueAnnounceChannelsRepository
         self.__analogueSettingsHelper = analogueSettingsHelper
@@ -72,9 +64,7 @@ class CynanBotDiscord(commands.Bot):
         self.__generalSettingsHelper = generalSettingsHelper
         self.__twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository
         self.__twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
-        self.__twitchLiveHelper = twitchLiveHelper
         self.__twitchLiveUsersRepository = twitchLiveUsersRepository
-        self.__usersRepository = usersRepository
 
         now = datetime.utcnow()
         self.__analogueCommandCoolDown = timedelta(minutes = 10)
