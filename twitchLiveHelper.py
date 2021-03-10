@@ -1,3 +1,4 @@
+import locale
 from json.decoder import JSONDecodeError
 from typing import Dict, List
 
@@ -80,6 +81,12 @@ class TwitchLiveData():
     def getViewerCount(self) -> int:
         return self.__viewerCount
 
+    def getViewerCountStr(self) -> str:
+        if self.hasViewerCount():
+            return locale.format_string("%d", self.__viewerCount, grouping = True)
+        else:
+            raise RuntimeError(f'This TwitchLiveData ({self}) does not have a viewerCount value!')
+
     def hasGameId(self) -> bool:
         return utils.isValidStr(self.__gameId)
 
@@ -128,7 +135,13 @@ class TwitchLiveHelper():
         self.__twitchTokensRepository = twitchTokensRepository
         self.__twitchHandle = twitchHandle
 
-    def whoIsLive(self, users: List[User]) -> Dict[User, TwitchLiveData]:
+    def fetchWhoIsLive(self, users: List[User]) -> Dict[User, TwitchLiveData]:
+        return self.__fetchWhoIsLive(users = users, isRetry = False)
+
+    def __fetchWhoIsLive(self, users: List[User], isRetry: bool) -> Dict[User, TwitchLiveData]:
+        if isRetry is None:
+            raise ValueError(f'isRetry argument is malformed: \"{isRetry}\"')
+
         if not utils.hasItems(users):
             return None
         elif len(users) > 100:
@@ -165,23 +178,25 @@ class TwitchLiveHelper():
         if 'error' in jsonResponse and len(jsonResponse['error']) >= 1 or 'data' not in jsonResponse:
             print(f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
 
-            if 'status' in jsonResponse and jsonResponse['status'] == 401:
+            if isRetry:
+                raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop!')
+            elif 'status' in jsonResponse and jsonResponse['status'] == 401:
                 self.__twitchTokensRepository.validateAndRefreshAccessToken(
                     twitchClientId = self.__twitchClientId,
                     twitchClientSecret = self.__twitchClientSecret,
                     twitchHandle = self.__twitchHandle
                 )
 
-                # I guess this could be dangerous LOL but it works for now...
-                return self.whoIsLive(users)
+                return self.__fetchWhoIsLive(users = users, isRetry = True)
             else:
-                raise RuntimeError(f'Unknown error returned by Twitch API')
+                raise RuntimeError(f'Unknown error returned by Twitch API: {jsonResponse}')
 
         dataArray = jsonResponse['data']
         if not utils.hasItems(dataArray):
             return None
 
         whoIsLive = dict()
+        whoIsLiveUserNames = list()
 
         for dataJson in dataArray:
             twitchLiveData = TwitchLiveData(
@@ -200,10 +215,12 @@ class TwitchLiveHelper():
 
             if twitchLiveData.isStreamTypeLive():
                 userName = twitchLiveData.getUserName().lower()
+                whoIsLiveUserNames.append(twitchLiveData.getUserName())
 
                 for user in users:
                     if userName == user.getTwitchName().lower():
                         whoIsLive[user] = twitchLiveData
 
-        print(f'Number of users live on Twitch: {len(whoIsLive)}')
+        whoIsLiveUserNamesString = ', '.join(whoIsLiveUserNames)
+        print(f'{len(whoIsLive)} user(s) live on Twitch: {whoIsLiveUserNamesString}')
         return whoIsLive

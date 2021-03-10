@@ -1,4 +1,4 @@
 {
-    "announceFalloffMinutes": 30,
+    "announceFalloffMinutes": 60,
     "refreshEveryMinutes": 5
 }

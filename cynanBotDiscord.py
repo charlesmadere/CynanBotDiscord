@@ -11,12 +11,14 @@ from analogueAnnounceChannelsRepository import (
     AnalogueAnnounceChannel, AnalogueAnnounceChannelsRepository)
 from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
-from CynanBotCommon.analogueStoreRepository import (AnalogueProductType, AnalogueStoreRepository,
+from CynanBotCommon.analogueStoreRepository import (AnalogueProductType,
+                                                    AnalogueStoreRepository,
                                                     AnalogueStoreStock)
 from generalSettingsHelper import GeneralSettingsHelper
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
 from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
 from twitchLiveHelper import TwitchLiveHelper
+from twitchLiveUsersRepository import TwitchLiveUsersRepository
 from user import User
 from usersRepository import UsersRepository
 
@@ -33,6 +35,7 @@ class CynanBotDiscord(commands.Bot):
         twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository,
         twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper,
         twitchLiveHelper: TwitchLiveHelper,
+        twitchLiveUsersRepository: TwitchLiveUsersRepository,
         usersRepository: UsersRepository
     ):
         super().__init__(
@@ -57,6 +60,8 @@ class CynanBotDiscord(commands.Bot):
             raise ValueError(f'twitchAnnounceSttingsHelper argument is malformed: \"{twitchAnnounceSettingsHelper}\"')
         elif twitchLiveHelper is None:
             raise ValueError(f'twitchLiveHelper argument is malformed: \"{twitchLiveHelper}\"')
+        elif twitchLiveUsersRepository:
+            raise ValueError(f'twitchLiveUsersRepository argument is malformed: \"{twitchLiveUsersRepository}\"')
         elif usersRepository is None:
             raise ValueError(f'usersRepository argument is malformed: \"{usersRepository}\"')
 
@@ -68,6 +73,7 @@ class CynanBotDiscord(commands.Bot):
         self.__twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository
         self.__twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
         self.__twitchLiveHelper = twitchLiveHelper
+        self.__twitchLiveUsersRepository = twitchLiveUsersRepository
         self.__usersRepository = usersRepository
 
         now = datetime.utcnow()
@@ -124,8 +130,8 @@ class CynanBotDiscord(commands.Bot):
 
         for mention in mentions:
             user = User(
-                discordId = mention.id,
                 discordDiscriminator = mention.discriminator,
+                discordId = mention.id,
                 discordName = mention.name
             )
 
@@ -170,8 +176,8 @@ class CynanBotDiscord(commands.Bot):
             return
 
         user = User(
-            discordId = int(mentions[0].id),
             discordDiscriminator = mentions[0].discriminator,
+            discordId = mentions[0].id,
             discordName = mentions[0].name,
             twitchName = twitchName
         )
@@ -240,76 +246,31 @@ class CynanBotDiscord(commands.Bot):
 
         self.__lastTwitchCheckTime = now
 
-        twitchAnnounceChannels = self.__twitchAnnounceChannelsRepository.fetchTwitchAnnounceChannels()
-        if not utils.hasItems(twitchAnnounceChannels):
+        twitchLiveUserData = self.__twitchLiveUsersRepository.fetchTwitchLiveUserData()
+        if not utils.hasItems(twitchLiveUserData):
             return
 
-        userIdsToChannels = dict()
-        userIdsToUsers = dict()
-
-        for twitchAnnounceChannel in twitchAnnounceChannels:
-            if utils.hasItems(twitchAnnounceChannel.getUsers()):
-                for user in twitchAnnounceChannel.getUsers():
-                    if user.getDiscordId() not in userIdsToChannels:
-                        userIdsToChannels[user.getDiscordId()] = set()
-
-                        if user.getDiscordId() not in userIdsToUsers:
-                            userIdsToUsers[user.getDiscordId()] = user
-
-                    userIdsToChannels[user.getDiscordId()].add(twitchAnnounceChannel.getDiscordChannelId())
-
-        if not utils.hasItems(userIdsToChannels) or not utils.hasItems(userIdsToUsers):
-            return
-
-        users = list()
-        for user in userIdsToUsers.values():
-            users.append(user)
-
-        whoIsLive = None
-        try:
-            whoIsLive = self.__twitchLiveHelper.whoIsLive(users)
-        except (RuntimeError, ValueError):
-            return
-
-        if not utils.hasItems(whoIsLive):
-            return
-
-        announceTimeDelta = timedelta(minutes = self.__twitchAnnounceSettingsHelper.getAnnounceFalloffMinutes())
-        removeTheseUsers = list()
-
-        for user in whoIsLive:
-            if user.hasMostRecentStreamDateTime() and user.getMostRecentStreamDateTime() + announceTimeDelta >= now:
-                removeTheseUsers.append(user)
-
-            user.setMostRecentStreamDateTime(now)
-            self.__usersRepository.addOrUpdateUser(user)
-
-        if utils.hasItems(removeTheseUsers):
-            for removeThisUser in removeTheseUsers:
-                del whoIsLive[removeThisUser]
-
-        if not utils.hasItems(whoIsLive):
-            return
-
-        for user in whoIsLive:
-            twitchLiveData = whoIsLive[user]
+        for twitchLiveUserData in twitchLiveUserData:
+            twitchLiveData = twitchLiveUserData.getTwitchLiveData()
 
             firstLineText = ''
             if twitchLiveData.hasGameName():
-                firstLineText = f'{user.getDiscordName()} is now live with {twitchLiveData.getGameName()}!'
+                firstLineText = f'{twitchLiveData.getUserName()} is now live with {twitchLiveData.getGameName()}!'
             else:
-                firstLineText = f'{user.getDiscordName()} is now live!'
+                firstLineText = f'{twitchLiveData.getUserName()} is now live!'
 
-            secondLineText = f' https://twitch.tv/{user.getTwitchName()}'
+            secondLineText = f' https://twitch.tv/{twitchLiveData.getUserName()}'
 
             thirdLineText = ''
             if twitchLiveData.hasTitle():
                 thirdLineText = f'\n> {twitchLiveData.getTitle()}'
 
             discordAnnounceText = f'{firstLineText}{secondLineText}{thirdLineText}'
+
+            user = twitchLiveUserData.getUser()
             announceChannelNames = list()
 
-            for discordChannelId in userIdsToChannels[user.getDiscordId()]:
+            for discordChannelId in twitchLiveUserData.getDiscordChannelIds():
                 channel = await self.__fetchChannel(discordChannelId)
                 guildMember = await channel.guild.fetch_member(user.getDiscordId())
 
@@ -537,8 +498,8 @@ class CynanBotDiscord(commands.Bot):
 
         for mention in mentions:
             user = User(
-                discordId = mention.id,
                 discordDiscriminator = mention.discriminator,
+                discordId = mention.id,
                 discordName = mention.name
             )
 
@@ -563,8 +524,8 @@ class CynanBotDiscord(commands.Bot):
         userNames = list()
         for mention in mentions:
             user = User(
-                discordId = mention.id,
                 discordDiscriminator = mention.discriminator,
+                discordId = mention.id,
                 discordName = mention.name
             )
 

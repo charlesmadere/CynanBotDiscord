@@ -105,14 +105,15 @@ class TwitchAnnounceChannelsRepository():
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
 
         cursor = self.__backingDatabase.getConnection().cursor()
+        rows = None
 
         try:
             cursor.execute(f'SELECT discordUserId FROM twitchAnnounceChannel_{discordChannelId}')
+            rows = cursor.fetchall()
         except OperationalError:
             # this error can be safely ignored, it just means the above table doesn't exist
-            return None
+            pass
 
-        rows = cursor.fetchall()
         if not utils.hasItems(rows):
             cursor.close()
             return TwitchAnnounceChannel(discordChannelId = discordChannelId)
@@ -126,7 +127,9 @@ class TwitchAnnounceChannelsRepository():
                 raise RuntimeError(f'Twitch announce user {user.getDiscordNameAndDiscriminator()} for channel {discordChannelId} has no Twitch name!')
 
             users.append(user)
-            cursor.close()
+
+        cursor.close()
+        users.sort(key = lambda user: user.getDiscordName().lower())
 
         return TwitchAnnounceChannel(
             discordChannelId = discordChannelId,

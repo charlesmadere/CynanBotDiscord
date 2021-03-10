@@ -7,21 +7,21 @@ class User():
 
     def __init__(
         self,
-        discordId: int,
         discordDiscriminator: str,
+        discordId: str,
         discordName: str,
         mostRecentStreamDateTime: datetime = None,
         twitchName: str = None
     ):
-        if not utils.isValidNum(discordId):
-            raise ValueError(f'discordId argument is malformed: \"{discordId}\"')
-        elif not utils.isValidStr(discordDiscriminator):
+        if not utils.isValidStr(discordDiscriminator):
             raise ValueError(f'discordDiscriminator argument is malformed: \"{discordDiscriminator}\"')
+        elif not utils.isValidStr(discordId):
+            raise ValueError(f'discordId argument is malformed: \"{discordId}\"')
         elif not utils.isValidStr(discordName):
             raise ValueError(f'discordName argument is malformed: \"{discordName}\"')
 
-        self.__discordId = discordId
         self.__discordDiscriminator = discordDiscriminator
+        self.__discordId = discordId
         self.__discordName = discordName
         self.__mostRecentStreamDateTime = mostRecentStreamDateTime
         self.__twitchName = twitchName
@@ -29,7 +29,7 @@ class User():
     def getDiscordDiscriminator(self) -> str:
         return self.__discordDiscriminator
 
-    def getDiscordId(self) -> int:
+    def getDiscordId(self) -> str:
         return self.__discordId
 
     def getDiscordName(self) -> str:

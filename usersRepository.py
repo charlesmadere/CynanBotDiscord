@@ -37,7 +37,7 @@ class UsersRepository():
                 VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, mostRecentStreamDateTime = excluded.mostRecentStreamDateTime, twitchName = excluded.twitchName
             ''',
-            ( user.getDiscordDiscriminator(), str(user.getDiscordId()), user.getDiscordName(), user.getMostRecentStreamDateTimeStr(), user.getTwitchName() )
+            ( user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTimeStr(), user.getTwitchName() )
         )
         connection.commit()
         cursor.close()
@@ -62,8 +62,8 @@ class UsersRepository():
             raise ValueError(f'Unable to find user with discordId: \"{discordId}\"')
 
         user = User(
-            discordId = int(row[1]),
             discordDiscriminator = row[0],
+            discordId = row[1],
             discordName = row[2],
             mostRecentStreamDateTime = utils.getDateTimeFromStr(row[3]),
             twitchName = row[4]

@@ -101,7 +101,7 @@ class AnalogueAnnounceChannelsRepository():
                 VALUES (?)
                 ON CONFLICT (discordUserId) DO NOTHING
             ''',
-            ( str(user.getDiscordId()), )
+            ( user.getDiscordId(), )
         )
         connection.commit()
         cursor.close()
@@ -148,14 +148,15 @@ class AnalogueAnnounceChannelsRepository():
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
 
         cursor = self.__backingDatabase.getConnection().cursor()
+        rows = None
 
         try:
             cursor.execute(f'SELECT analoguePriorityProduct FROM analogueAnnounceChannelProducts_{discordChannelId}')
+            rows = cursor.fetchall()
         except OperationalError:
             # this error can be safely ignored, it just means the above table doesn't exist
             pass
 
-        rows = cursor.fetchall()
         analoguePriorityProducts = list()
 
         if utils.hasItems(rows):
@@ -165,14 +166,15 @@ class AnalogueAnnounceChannelsRepository():
 
         cursor.close()
         cursor = self.__backingDatabase.getConnection().cursor()
+        rows = None
 
         try:
             cursor.execute(f'SELECT discordUserId FROM analogueAnnounceChannelUsers_{discordChannelId}')
+            rows = cursor.fetchall()
         except OperationalError:
             # this error can be safely ignored, it just means the above table doesn't exist
             pass
 
-        rows = cursor.fetchall()
         users = list()
 
         if utils.hasItems(rows):
@@ -181,6 +183,7 @@ class AnalogueAnnounceChannelsRepository():
                 users.append(user)
 
         cursor.close()
+        users.sort(key = lambda user: user.getDiscordName().lower())
 
         return AnalogueAnnounceChannel(
             discordChannelId = discordChannelId,
