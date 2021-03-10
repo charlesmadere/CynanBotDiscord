@@ -54,7 +54,7 @@ class CynanBotDiscord(commands.Bot):
             raise ValueError(f'twitchAnnounceChannelsRepository argument is malformed: \"{twitchAnnounceChannelsRepository}\"')
         elif twitchAnnounceSettingsHelper is None:
             raise ValueError(f'twitchAnnounceSttingsHelper argument is malformed: \"{twitchAnnounceSettingsHelper}\"')
-        elif twitchLiveUsersRepository:
+        elif twitchLiveUsersRepository is None:
             raise ValueError(f'twitchLiveUsersRepository argument is malformed: \"{twitchLiveUsersRepository}\"')
 
         self.__analogueAnnounceChannelsRepository = analogueAnnounceChannelsRepository
