@@ -223,4 +223,8 @@ class TwitchLiveHelper():
 
         whoIsLiveUserNamesString = ', '.join(whoIsLiveUserNames)
         print(f'{len(whoIsLive)} user(s) live on Twitch: {whoIsLiveUserNamesString}')
+
+        if len(whoIsLive) != len(whoIsLiveUserNames):
+            print(f'Encountered a data error of some kind, outputting some debug information:\n{jsonResponse}')
+
         return whoIsLive
