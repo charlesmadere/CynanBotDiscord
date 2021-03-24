@@ -121,7 +121,7 @@ class CynanBotDiscord(commands.Bot):
         for mention in mentions:
             user = User(
                 discordDiscriminator = mention.discriminator,
-                discordId = mention.id,
+                discordId = str(mention.id),
                 discordName = mention.name
             )
 
@@ -167,7 +167,7 @@ class CynanBotDiscord(commands.Bot):
 
         user = User(
             discordDiscriminator = mentions[0].discriminator,
-            discordId = mentions[0].id,
+            discordId = str(mentions[0].id),
             discordName = mentions[0].name,
             twitchName = twitchName
         )
@@ -489,7 +489,7 @@ class CynanBotDiscord(commands.Bot):
         for mention in mentions:
             user = User(
                 discordDiscriminator = mention.discriminator,
-                discordId = mention.id,
+                discordId = str(mention.id),
                 discordName = mention.name
             )
 
@@ -515,7 +515,7 @@ class CynanBotDiscord(commands.Bot):
         for mention in mentions:
             user = User(
                 discordDiscriminator = mention.discriminator,
-                discordId = mention.id,
+                discordId = str(mention.id),
                 discordName = mention.name
             )
 
