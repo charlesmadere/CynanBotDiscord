@@ -31,14 +31,44 @@ class UsersRepository():
 
         connection = self.__backingDatabase.getConnection()
         cursor = connection.cursor()
-        cursor.execute(
-            '''
-                INSERT INTO users (discordDiscriminator, discordId, discordName, mostRecentStreamDateTime, twitchName)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, mostRecentStreamDateTime = excluded.mostRecentStreamDateTime, twitchName = excluded.twitchName
-            ''',
-            ( user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTimeStr(), user.getTwitchName() )
-        )
+
+        if user.hasMostRecentStreamDateTime() and user.hasTwitchName():
+            cursor.execute(
+                '''
+                    INSERT INTO users (discordDiscriminator, discordId, discordName, mostRecentStreamDateTime, twitchName)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, mostRecentStreamDateTime = excluded.mostRecentStreamDateTime, twitchName = excluded.twitchName
+                ''',
+                ( user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTimeStr(), user.getTwitchName() )
+            )
+        elif user.hasMostRecentStreamDateTime():
+            cursor.execute(
+                '''
+                    INSERT INTO users (discordDiscriminator, discordId, discordName, mostRecentStreamDateTime)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, mostRecentStreamDateTime = excluded.mostRecentStreamDateTime
+                ''',
+                ( user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTimeStr() )
+            )
+        elif user.hasTwitchName():
+            cursor.execute(
+                '''
+                    INSERT INTO users (discordDiscriminator, discordId, discordName, twitchName)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, twitchName = excluded.twitchName
+                ''',
+                ( user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getTwitchName() )
+            )
+        else:
+            cursor.execute(
+                '''
+                    INSERT INTO users (discordDiscriminator, discordId, discordName)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName
+                ''',
+                ( user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName() )
+            )
+
         connection.commit()
         cursor.close()
 

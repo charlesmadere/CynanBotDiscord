@@ -79,7 +79,8 @@ class AnalogueAnnounceChannelsRepository():
                 INSERT INTO analogueAnnounceChannelProducts_{discordChannelId} (analoguePriorityProduct)
                 VALUES (?)
                 ON CONFLICT (analoguePriorityProduct) DO NOTHING
-            '''
+            ''',
+            ( analoguePriorityProduct.toStr(), )
         )
         connection.commit()
         cursor.close()
