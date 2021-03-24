@@ -104,6 +104,9 @@ class CynanBotDiscord(commands.Bot):
             discordChannelId = ctx.channel.id
         )
 
+        print(f'Added Analogue priority product monitor for {analoguePriorityProduct.toStr()} in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
+        await ctx.send(f'added Analogue priority product monitor for `{analoguePriorityProduct.toStr()}`')
+
     async def addAnalogueUser(self, ctx):
         if ctx is None:
             raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
@@ -118,6 +121,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to add')
             return
 
+        users = list()
         for mention in mentions:
             user = User(
                 discordDiscriminator = mention.discriminator,
@@ -126,8 +130,15 @@ class CynanBotDiscord(commands.Bot):
             )
 
             self.__analogueAnnounceChannelsRepository.addUser(user, ctx.channel.id)
+            users.append(user)
 
+        usersStrings = list()
+        for user in users:
+            usersStrings.append(f'`{user.getDiscordNameAndDiscriminator()}`')
+
+        usersString = ', '.join(usersStrings)
         print(f'Added Analogue user(s) to notify in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
+        await ctx.send(f'added {usersString} to Analogue announce users')
 
     async def addTwitchUser(self, ctx):
         if ctx is None:
