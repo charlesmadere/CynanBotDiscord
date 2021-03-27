@@ -459,6 +459,9 @@ class CynanBotDiscord(commands.Bot):
             discordChannelId = ctx.channel.id
         )
 
+        print(f'Removed Analogue priority product monitor for {analoguePriorityProduct.toStr()} in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
+        await ctx.send(f'removed Analogue priority product monitor for `{analoguePriorityProduct.toStr()}`')
+
     async def removeAnalogueUser(self, ctx):
         if ctx is None:
             raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
