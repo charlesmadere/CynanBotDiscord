@@ -67,8 +67,6 @@ class CynanBotDiscord(commands.Bot):
         self.__twitchLiveUsersRepository = twitchLiveUsersRepository
 
         now = datetime.utcnow()
-        self.__analogueCommandCoolDown = timedelta(minutes = 10)
-        self.__lastAnalogueCommandMessageTime = now - self.__analogueCommandCoolDown
         self.__lastAnalogueCheckTime = now - timedelta(seconds = self.__analogueSettingsHelper.getRefreshEverySeconds())
         self.__lastTwitchCheckTime = now - timedelta(minutes = self.__twitchAnnounceSettingsHelper.getRefreshEveryMinutes())
 
@@ -187,28 +185,6 @@ class CynanBotDiscord(commands.Bot):
 
         print(f'Added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to Twitch announce users ({utils.getNowTimeText()})')
         await ctx.send(f'added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to Twitch announce users')
-
-    async def analogue(self, ctx):
-        if ctx is None:
-            raise ValueError(f'ctx argument is malformed: \"{ctx}\"')
-
-        await self.wait_until_ready()
-
-        if not self.__isAuthorAdministrator(ctx):
-            return
-
-        now = datetime.utcnow()
-        if self.__lastAnalogueCommandMessageTime + self.__analogueCommandCoolDown >= now:
-            return
-
-        self.__lastAnalogueCommandMessageTime = now
-
-        try:
-            result = self.__analogueStoreRepository.fetchStoreStock()
-            await ctx.send(result.toStr(includePrices = True))
-        except (RuntimeError, ValueError) as e:
-            print(f'Error fetching Analogue stock: {e}')
-            await ctx.send('⚠ Error fetching Analogue stock')
 
     async def __checkAnalogueStoreStock(self):
         now = datetime.utcnow()

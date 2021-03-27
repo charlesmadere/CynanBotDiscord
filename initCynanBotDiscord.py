@@ -75,10 +75,6 @@ async def addTwitchUser(ctx, *args):
     await cynanBotDiscord.addTwitchUser(ctx)
 
 @cynanBotDiscord.command()
-async def analogue(ctx, *args):
-    await cynanBotDiscord.analogue(ctx)
-
-@cynanBotDiscord.command()
 async def listAnaloguePriorityProducts(ctx, *args):
     await cynanBotDiscord.listAnaloguePriorityProducts(ctx)
 
