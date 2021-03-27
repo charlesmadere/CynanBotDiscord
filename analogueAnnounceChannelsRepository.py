@@ -228,7 +228,7 @@ class AnalogueAnnounceChannelsRepository():
                     DELETE FROM analogueAnnounceChannelProducts_{discordChannelId}
                     WHERE analoguePriorityProduct = ?
                 ''',
-                ( analoguePriorityProduct.name )
+                ( analoguePriorityProduct.name, )
             )
         except OperationalError:
             # this error can be safely ignored, it just means the above table doesn't exist
