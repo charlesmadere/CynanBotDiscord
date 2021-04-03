@@ -513,5 +513,5 @@ class CynanBotDiscord(commands.Bot):
             userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
         usersString = ', '.join(userNames)
-        print(f'Removed {usersString} from twitch announce users ({utils.getNowTimeText()})')
-        await ctx.send(f'removed {usersString} from twitch announce users')
+        print(f'Removed {usersString} from Twitch announce users ({utils.getNowTimeText()})')
+        await ctx.send(f'removed {usersString} from Twitch announce users')
