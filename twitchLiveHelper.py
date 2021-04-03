@@ -139,7 +139,7 @@ class TwitchLiveHelper():
         return self.__fetchWhoIsLive(users = users, isRetry = False)
 
     def __fetchWhoIsLive(self, users: List[User], isRetry: bool) -> Dict[User, TwitchLiveData]:
-        if isRetry is None:
+        if not utils.isValidBool(isRetry):
             raise ValueError(f'isRetry argument is malformed: \"{isRetry}\"')
 
         if not utils.hasItems(users):
