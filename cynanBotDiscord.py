@@ -476,6 +476,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to remove')
             return
 
+        users = list()
         for mention in mentions:
             user = User(
                 discordDiscriminator = mention.discriminator,
@@ -484,8 +485,15 @@ class CynanBotDiscord(commands.Bot):
             )
 
             self.__analogueAnnounceChannelsRepository.removeUser(user, ctx.channel.id)
+            users.append(user)
 
+        usersStrings = list()
+        for user in users:
+            usersStrings.append(f'`{user.getDiscordNameAndDiscriminator()}`')
+
+        usersString = ', '.join(usersStrings)
         print(f'Removed Analogue user(s) to notify in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
+        await ctx.send(f'removed {usersString} from Analogue announce users')
 
     async def removeTwitchUser(self, ctx):
         if ctx is None:
