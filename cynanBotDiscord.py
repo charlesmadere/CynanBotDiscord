@@ -91,7 +91,7 @@ class CynanBotDiscord(commands.Bot):
 
         content = utils.getCleanedSplits(ctx.message.content)
         if not utils.hasItems(content) or len(content) < 2:
-            await ctx.send('please specify the name of the Analogue product you want to monitor for availability. example:\n`!addAnaloguePriorityProduct Super Nt`')
+            await ctx.send(f'please specify the name of the Analogue product you want to monitor for availability. example:\n`!addAnaloguePriorityProduct {AnalogueProductType.MEGA_SG.toStr()}`')
             return
 
         productNameString = ' '.join(content[1:])
@@ -448,7 +448,7 @@ class CynanBotDiscord(commands.Bot):
 
         content = utils.getCleanedSplits(ctx.message.content)
         if not utils.hasItems(content) or len(content) < 2:
-            await ctx.send('please specify the name of the Analogue product you no longer want to be monitoring for availability. example:\n`!removeAnaloguePriorityProduct Super Nt`')
+            await ctx.send(f'please specify the name of the Analogue product you no longer want to monitor for availability. example:\n`!removeAnaloguePriorityProduct {AnalogueProductType.SUPER_NT.toStr()}`')
             return
 
         productNameString = ' '.join(content[1:])
