@@ -218,7 +218,8 @@ class TwitchLiveHelper():
                 whoIsLiveUserNames.append(twitchLiveData.getUserName())
 
                 for user in users:
-                    if userName == user.getTwitchName().lower():
+                    twitchName = user.getTwitchName().lower()
+                    if userName == twitchName or twitchLiveData.getUserLogin().lower() == twitchName:
                         whoIsLive[user] = twitchLiveData
 
         whoIsLiveUserNamesString = ', '.join(whoIsLiveUserNames)
