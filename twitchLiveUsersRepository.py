@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import List
 
 import CynanBotCommon.utils as utils
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
@@ -122,5 +122,5 @@ class TwitchLiveUsersRepository():
                 user = user
             ))
 
-        twitchLiveUserDataList.sort(key = lambda entry: entry.getTwitchLiveData().getUserName().lower())
+        twitchLiveUserDataList.sort(key = lambda entry: entry.getTwitchLiveData().getUserLogin().lower())
         return twitchLiveUserDataList

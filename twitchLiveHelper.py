@@ -196,7 +196,7 @@ class TwitchLiveHelper():
             return None
 
         whoIsLive = dict()
-        whoIsLiveUserNames = list()
+        whoIsLiveUserLogins = list()
 
         for dataJson in dataArray:
             twitchLiveData = TwitchLiveData(
@@ -214,18 +214,24 @@ class TwitchLiveHelper():
             )
 
             if twitchLiveData.isStreamTypeLive():
+                userLogin = twitchLiveData.getUserLogin().lower()
                 userName = twitchLiveData.getUserName().lower()
-                whoIsLiveUserNames.append(twitchLiveData.getUserName())
+                whoIsLiveUserLogins.append(twitchLiveData.getUserLogin())
 
                 for user in users:
                     twitchName = user.getTwitchName().lower()
-                    if userName == twitchName or twitchLiveData.getUserLogin().lower() == twitchName:
+
+                    # We check both userLogin and userName because some multi-language users
+                    # could have very different names between userLogin and userName. For example,
+                    # a Korean user may have a userName written using actual Korean characters,
+                    # and then a userLogin written in English characters.
+                    if userLogin == twitchName or userName == twitchName:
                         whoIsLive[user] = twitchLiveData
 
-        whoIsLiveUserNamesString = ', '.join(whoIsLiveUserNames)
-        print(f'{len(whoIsLive)} user(s) live on Twitch: {whoIsLiveUserNamesString}')
+        whoIsLiveUserLoginsString = ', '.join(whoIsLiveUserLogins)
+        print(f'{len(whoIsLive)} user(s) live on Twitch: {whoIsLiveUserLoginsString}')
 
-        if len(whoIsLive) != len(whoIsLiveUserNames):
+        if len(whoIsLive) != len(whoIsLiveUserLogins):
             print(f'Encountered a data error of some kind, outputting some debug information:\n{jsonResponse}')
 
         return whoIsLive

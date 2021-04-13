@@ -232,11 +232,11 @@ class CynanBotDiscord(commands.Bot):
 
             firstLineText = ''
             if twitchLiveData.hasGameName():
-                firstLineText = f'{twitchLiveData.getUserName()} is now live with {twitchLiveData.getGameName()}!'
+                firstLineText = f'{twitchLiveData.getUserLogin()} is now live with {twitchLiveData.getGameName()}!'
             else:
-                firstLineText = f'{twitchLiveData.getUserName()} is now live!'
+                firstLineText = f'{twitchLiveData.getUserLogin()} is now live!'
 
-            secondLineText = f' https://twitch.tv/{twitchLiveData.getUserName()}'
+            secondLineText = f' https://twitch.tv/{twitchLiveData.getUserLogin()}'
 
             thirdLineText = ''
             if twitchLiveData.hasTitle():
