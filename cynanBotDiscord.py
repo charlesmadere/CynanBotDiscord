@@ -198,6 +198,15 @@ class CynanBotDiscord(commands.Bot):
         if not utils.hasItems(analogueAnnounceChannels):
             return
 
+        lookingForProducts = False
+        for analogueAnnounceChannel in analogueAnnounceChannels:
+            if analogueAnnounceChannel.hasAnaloguePriorityProducts():
+                lookingForProducts = True
+                break
+
+        if not lookingForProducts:
+            return
+
         storeStock = None
         try:
             storeStock = self.__analogueStoreRepository.fetchStoreStock()
