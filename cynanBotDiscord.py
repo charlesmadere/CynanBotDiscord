@@ -78,7 +78,7 @@ class CynanBotDiscord(commands.Bot):
 
     async def on_ready(self):
         print(f'{self.user} is ready!')
-        self.loop.create_task(self.__refreshAnalogueStoreAndWait())
+        self.loop.create_task(self.__beginLooping())
 
     async def addAnaloguePriorityProduct(self, ctx):
         if ctx is None:
@@ -185,6 +185,14 @@ class CynanBotDiscord(commands.Bot):
 
         print(f'Added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to Twitch announce users ({utils.getNowTimeText()})')
         await ctx.send(f'added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to Twitch announce users')
+
+    async def __beginLooping(self):
+        await self.wait_until_ready()
+
+        while not self.is_closed():
+            await self.__checkAnalogueStoreStock()
+            await self.__checkTwitchStreams()
+            await asyncio.sleep(self.__generalSettingsHelper.getRefreshEverySeconds())
 
     async def __checkAnalogueStoreStock(self):
         now = datetime.utcnow()
@@ -437,14 +445,6 @@ class CynanBotDiscord(commands.Bot):
 
         userNamesString = '\n'.join(userNames)
         await ctx.send(f'users who are having their Twitch streams announced in this channel:\n{userNamesString}')
-
-    async def __refreshAnalogueStoreAndWait(self):
-        await self.wait_until_ready()
-
-        while not self.is_closed():
-            await self.__checkAnalogueStoreStock()
-            await self.__checkTwitchStreams()
-            await asyncio.sleep(self.__generalSettingsHelper.getRefreshEverySeconds())
 
     async def removeAnaloguePriorityProduct(self, ctx):
         if ctx is None:
