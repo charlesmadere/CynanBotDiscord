@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Dict
 
 import CynanBotCommon.utils as utils
 
@@ -15,37 +16,43 @@ class AuthHelper():
 
         self.__authFile = authFile
 
-        if not os.path.exists(authFile):
-            raise FileNotFoundError(f'Auth file not found: \"{authFile}\"')
-
-        with open(authFile, 'r') as file:
-            jsonContents = json.load(file)
-
-        if jsonContents is None:
-            raise IOError(f'Error reading from auth file: \"{authFile}\"')
-        elif len(jsonContents) == 0:
-            raise ValueError(f'JSON contents of auth file \"{authFile}\" is empty')
+    def requireDiscordToken(self) -> str:
+        jsonContents = self.__readJson()
 
         discordToken = jsonContents.get('discordToken')
         if not utils.isValidStr(discordToken):
-            raise ValueError(f'Auth file \"{authFile}\" has malformed \"discordToken\" value: \"{discordToken}\"')
-        self.__discordToken = discordToken
+            raise ValueError(f'\"discordToken\" in auth file \"{self.__authFile}\" is malformed: \"{discordToken}\"')
+
+        return discordToken
+
+    def requireTwitchClientId(self) -> str:
+        jsonContents = self.__readJson()
 
         twitchClientId = jsonContents.get('twitchClientId')
         if not utils.isValidStr(twitchClientId):
-            raise ValueError(f'Auth file \"{authFile}\" has malformed \"twitchClientId\" value: \"{twitchClientId}\"')
-        self.__twitchClientId = twitchClientId
+            raise ValueError(f'\"twitchClientId\" in auth file \"{self.__authFile}\" is malformed: \"{twitchClientId}\"')
+
+        return twitchClientId
+
+    def requireTwitchClientSecret(self) -> str:
+        jsonContents = self.__readJson()
 
         twitchClientSecret = jsonContents.get('twitchClientSecret')
         if not utils.isValidStr(twitchClientSecret):
-            raise ValueError(f'Auth file \"{authFile}\" has malformed \"twitchClientSecret\" value: \"{twitchClientSecret}\"')
-        self.__twitchClientSecret = twitchClientSecret
+            raise ValueError(f'\"twitchClientSecret\" in auth file \"{self.__authFile}\" is malformed: \"{twitchClientSecret}\"')
 
-    def getDiscordToken(self) -> str:
-        return self.__discordToken
+        return twitchClientSecret
 
-    def getTwitchClientId(self) -> str:
-        return self.__twitchClientId
+    def __readJson(self) -> Dict:
+        if not os.path.exists(self.__authFile):
+            raise FileNotFoundError(f'Auth file not found: \"{self.__authFile}\"')
 
-    def getTwitchClientSecret(self) -> str:
-        return self.__twitchClientSecret
+        with open(self.__authFile, 'r') as file:
+            jsonContents = json.load(file)
+
+        if jsonContents is None:
+            raise IOError(f'Error reading from auth file: \"{self.__authFile}\"')
+        elif len(jsonContents) == 0:
+            raise ValueError(f'JSON contents of auth file \"{self.__authFile}\" is empty')
+
+        return jsonContents
