@@ -160,7 +160,7 @@ class TwitchLiveHelper():
                 url = f'https://api.twitch.tv/helix/streams?user_login={userNames}',
                 headers = {
                     'Client-Id': self.__twitchClientId,
-                    'Authorization': f'Bearer {self.__twitchTokensRepository.getAccessToken(self.__twitchHandle)}'
+                    'Authorization': f'Bearer {self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)}'
                 },
                 timeout = utils.getDefaultTimeout()
             )
