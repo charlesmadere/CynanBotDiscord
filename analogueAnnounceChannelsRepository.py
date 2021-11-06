@@ -2,7 +2,7 @@ from sqlite3 import OperationalError
 from typing import List
 
 import CynanBotCommon.utils as utils
-from CynanBotCommon.analogueStoreRepository import AnalogueProductType
+from CynanBotCommon.analogue.analogueProductType import AnalogueProductType
 from CynanBotCommon.backingDatabase import BackingDatabase
 from user import User
 from usersRepository import UsersRepository

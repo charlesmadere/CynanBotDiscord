@@ -11,9 +11,10 @@ from analogueAnnounceChannelsRepository import (
     AnalogueAnnounceChannel, AnalogueAnnounceChannelsRepository)
 from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
-from CynanBotCommon.analogueStoreRepository import (AnalogueProductType,
-                                                    AnalogueStoreRepository,
-                                                    AnalogueStoreStock)
+from CynanBotCommon.analogue.analogueProductType import AnalogueProductType
+from CynanBotCommon.analogue.analogueStoreRepository import \
+    AnalogueStoreRepository
+from CynanBotCommon.analogue.analogueStoreStock import AnalogueStoreStock
 from generalSettingsHelper import GeneralSettingsHelper
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
 from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper

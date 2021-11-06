@@ -1,9 +1,11 @@
 from datetime import timedelta
 
-from analogueAnnounceChannelsRepository import AnalogueAnnounceChannelsRepository
+from analogueAnnounceChannelsRepository import \
+    AnalogueAnnounceChannelsRepository
 from analogueSettingsHelper import AnalogueSettingsHelper
 from authHelper import AuthHelper
-from CynanBotCommon.analogueStoreRepository import AnalogueStoreRepository
+from CynanBotCommon.analogue.analogueStoreRepository import \
+    AnalogueStoreRepository
 from CynanBotCommon.backingDatabase import BackingDatabase
 from CynanBotCommon.twitchTokensRepository import TwitchTokensRepository
 from cynanBotDiscord import CynanBotDiscord
