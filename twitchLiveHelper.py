@@ -148,9 +148,9 @@ class TwitchLiveHelper():
         elif len(users) > 100:
             raise ValueError(f'more users than can be asked for from the Twitch API: \"{len(users)}\"')
 
-        print(f'Checking Twitch live status for {len(users)} user(s)... ({utils.getNowTimeText()})')
+        print(f'Checking Twitch live status for {len(users)} user(s)... ({utils.getNowTimeText(includeSeconds = True)})')
 
-        userNamesList = list()
+        userNamesList: List[str] = list()
         for user in users:
             userNamesList.append(user.getTwitchName())
         userNames = '&user_login='.join(userNamesList)
@@ -180,8 +180,8 @@ class TwitchLiveHelper():
             print(f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
 
             if isRetry:
-                raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop!')
-            elif 'status' in jsonResponse and jsonResponse['status'] == 401:
+                raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop! ({utils.getNowTimeText(includeSeconds = True)})')
+            elif 'status' in jsonResponse and utils.getIntFromDict(jsonResponse, 'status') == 401:
                 self.__twitchTokensRepository.validateAndRefreshAccessToken(
                     twitchClientId = self.__twitchClientId,
                     twitchClientSecret = self.__twitchClientSecret,
@@ -192,19 +192,19 @@ class TwitchLiveHelper():
             else:
                 raise RuntimeError(f'Unknown error returned by Twitch API: {jsonResponse}')
 
-        dataArray = jsonResponse['data']
+        dataArray = jsonResponse.get('data')
         if not utils.hasItems(dataArray):
             return None
 
-        whoIsLive = dict()
-        whoIsLiveUserLogins = list()
+        whoIsLive: Dict[User, TwitchLiveData] = dict()
+        whoIsLiveUserLogins: List[str] = list()
 
         for dataJson in dataArray:
             twitchLiveData = TwitchLiveData(
-                streamId = dataJson['id'],
-                userId = dataJson['user_id'],
-                userLogin = dataJson['user_login'],
-                userName = dataJson['user_name'],
+                streamId = utils.getStrFromDict(dataJson, 'id'),
+                userId = utils.getStrFromDict(dataJson, 'user_id'),
+                userLogin = utils.getStrFromDict(dataJson, 'user_login'),
+                userName = utils.getStrFromDict(dataJson, 'user_name'),
                 viewerCount = dataJson.get('viewer_count'),
                 gameId = dataJson.get('game_id'),
                 gameName = dataJson.get('game_name'),
@@ -230,9 +230,9 @@ class TwitchLiveHelper():
                         whoIsLive[user] = twitchLiveData
 
         whoIsLiveUserLoginsString = ', '.join(whoIsLiveUserLogins)
-        print(f'{len(whoIsLive)} user(s) live on Twitch: {whoIsLiveUserLoginsString}')
+        print(f'{len(whoIsLive)} user(s) live on Twitch ({utils.getNowTimeText(includeSeconds = True)}): {whoIsLiveUserLoginsString}')
 
         if len(whoIsLive) != len(whoIsLiveUserLogins):
-            print(f'Encountered a data error of some kind, outputting some debug information:\n{jsonResponse}')
+            print(f'Encountered a data error of some kind, outputting some debug information ({utils.getNowTimeText(includeSeconds = True)}):\n{jsonResponse}')
 
         return whoIsLive
