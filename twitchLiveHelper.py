@@ -4,6 +4,7 @@ from typing import Dict, List
 
 import requests
 from requests import ConnectionError, HTTPError, Timeout
+from requests.exceptions import ReadTimeout, TooManyRedirects
 from urllib3.exceptions import MaxRetryError, NewConnectionError
 
 import CynanBotCommon.utils as utils
@@ -164,7 +165,7 @@ class TwitchLiveHelper():
                 },
                 timeout = utils.getDefaultTimeout()
             )
-        except (ConnectionError, HTTPError, MaxRetryError, NewConnectionError, Timeout) as e:
+        except (ConnectionError, HTTPError, MaxRetryError, NewConnectionError, ReadTimeout, Timeout, TooManyRedirects) as e:
             print(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
 
