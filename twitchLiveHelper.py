@@ -131,10 +131,11 @@ class TwitchLiveHelper():
         elif not utils.isValidStr(twitchHandle):
             raise ValueError(f'twitchHandle argument is malformed: \"{twitchHandle}\"')
 
-        self.__twitchClientId = twitchClientId
-        self.__twitchClientSecret = twitchClientSecret
+        self.__twitchClientId: str = twitchClientId
+        self.__twitchClientSecret: str = twitchClientSecret
         self.__twitchTokensRepository = twitchTokensRepository
-        self.__twitchHandle = twitchHandle
+        self.__twitchTokensRepository: TwitchTokensRepository = twitchTokensRepository
+        self.__twitchHandle: str = twitchHandle
 
     def fetchWhoIsLive(self, users: List[User]) -> Dict[User, TwitchLiveData]:
         return self.__fetchWhoIsLive(users = users, isRetry = False)
@@ -169,7 +170,7 @@ class TwitchLiveHelper():
             print(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
 
-        jsonResponse = None
+        jsonResponse: Dict[str, object] = None
         try:
             jsonResponse = rawResponse.json()
         except JSONDecodeError as e:

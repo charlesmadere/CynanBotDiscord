@@ -14,7 +14,7 @@ class AuthHelper():
         if not utils.isValidStr(authFile):
             raise ValueError(f'argument is malformed: \"{authFile}\"')
 
-        self.__authFile = authFile
+        self.__authFile: str = authFile
 
     def requireDiscordToken(self) -> str:
         jsonContents = self.__readJson()
@@ -43,7 +43,7 @@ class AuthHelper():
 
         return twitchClientSecret
 
-    def __readJson(self) -> Dict:
+    def __readJson(self) -> Dict[str, object]:
         if not os.path.exists(self.__authFile):
             raise FileNotFoundError(f'Auth file not found: \"{self.__authFile}\"')
 
