@@ -8,6 +8,7 @@ from requests.exceptions import ReadTimeout, TooManyRedirects
 from urllib3.exceptions import MaxRetryError, NewConnectionError
 
 import CynanBotCommon.utils as utils
+from CynanBotCommon.timber.timber import Timber
 from CynanBotCommon.twitchTokensRepository import TwitchTokensRepository
 from user import User
 
@@ -119,6 +120,7 @@ class TwitchLiveHelper():
         self,
         twitchClientId: str,
         twitchClientSecret: str,
+        timber: Timber,
         twitchTokensRepository: TwitchTokensRepository,
         twitchHandle: str = 'CynanBot'
     ):
@@ -126,6 +128,8 @@ class TwitchLiveHelper():
             raise ValueError(f'twitchClientId argument is malformed: \"{twitchClientId}\"')
         elif not utils.isValidStr(twitchClientSecret):
             raise ValueError(f'twitchClientSecret argument is malformed: \"{twitchClientSecret}\"')
+        elif timber is None:
+            raise ValueError(f'timber argument is malformed: \"{timber}\"')
         elif twitchTokensRepository is None:
             raise ValueError(f'twitchTokensRepository argument is malformed: \"{twitchTokensRepository}\"')
         elif not utils.isValidStr(twitchHandle):
@@ -133,7 +137,7 @@ class TwitchLiveHelper():
 
         self.__twitchClientId: str = twitchClientId
         self.__twitchClientSecret: str = twitchClientSecret
-        self.__twitchTokensRepository = twitchTokensRepository
+        self.__timber: Timber = timber
         self.__twitchTokensRepository: TwitchTokensRepository = twitchTokensRepository
         self.__twitchHandle: str = twitchHandle
 
@@ -149,7 +153,7 @@ class TwitchLiveHelper():
         elif len(users) > 100:
             raise ValueError(f'more users than can be asked for from the Twitch API: \"{len(users)}\"')
 
-        print(f'Checking Twitch live status for {len(users)} user(s)... ({utils.getNowTimeText(includeSeconds = True)})')
+        self.__timber.log('TwitchLiveHelper', f'Checking Twitch live status for {len(users)} user(s)...')
 
         userNamesList: List[str] = list()
         for user in users:
@@ -167,18 +171,18 @@ class TwitchLiveHelper():
                 timeout = utils.getDefaultTimeout()
             )
         except (ConnectionError, HTTPError, MaxRetryError, NewConnectionError, ReadTimeout, Timeout, TooManyRedirects) as e:
-            print(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
+            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch streams: {e}')
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
 
         jsonResponse: Dict[str, object] = None
         try:
             jsonResponse = rawResponse.json()
         except JSONDecodeError as e:
-            print(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
+            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
             raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
 
         if 'error' in jsonResponse and len(jsonResponse['error']) >= 1 or 'data' not in jsonResponse:
-            print(f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
+            self.__timber.log('TwitchLiveHelper', f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
 
             if isRetry:
                 raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop! ({utils.getNowTimeText(includeSeconds = True)})')
@@ -231,9 +235,9 @@ class TwitchLiveHelper():
                         whoIsLive[user] = twitchLiveData
 
         whoIsLiveUserLoginsString = ', '.join(whoIsLiveUserLogins)
-        print(f'{len(whoIsLive)} user(s) live on Twitch ({utils.getNowTimeText(includeSeconds = True)}): {whoIsLiveUserLoginsString}')
+        self.__timber.log('TwitchLiveHelper', f'{len(whoIsLive)} user(s) live on Twitch: {whoIsLiveUserLoginsString}')
 
         if len(whoIsLive) != len(whoIsLiveUserLogins):
-            print(f'Encountered a data error of some kind, outputting some debug information ({utils.getNowTimeText(includeSeconds = True)}):\n{jsonResponse}')
+            self.__timber.log('TwitchLiveHelper', f'Encountered a data error of some kind, outputting some debug information: {jsonResponse}')
 
         return whoIsLive

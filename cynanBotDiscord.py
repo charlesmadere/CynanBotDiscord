@@ -15,6 +15,7 @@ from CynanBotCommon.analogue.analogueProductType import AnalogueProductType
 from CynanBotCommon.analogue.analogueStoreRepository import \
     AnalogueStoreRepository
 from CynanBotCommon.analogue.analogueStoreStock import AnalogueStoreStock
+from CynanBotCommon.timber.timber import Timber
 from generalSettingsHelper import GeneralSettingsHelper
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
 from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
@@ -31,6 +32,7 @@ class CynanBotDiscord(commands.Bot):
         analogueStoreRepository: AnalogueStoreRepository,
         authHelper: AuthHelper,
         generalSettingsHelper: GeneralSettingsHelper,
+        timber: Timber,
         twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository,
         twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper,
         twitchLiveUsersRepository: TwitchLiveUsersRepository
@@ -51,6 +53,8 @@ class CynanBotDiscord(commands.Bot):
             raise ValueError(f'authHelper argument is malformed: \"{authHelper}\"')
         elif generalSettingsHelper is None:
             raise ValueError(f'generalSettingsHelper argument is malformed: \"{generalSettingsHelper}\"')
+        elif timber is None:
+            raise ValueError(f'timber argument is malformed: \"{timber}\"')
         elif twitchAnnounceChannelsRepository is None:
             raise ValueError(f'twitchAnnounceChannelsRepository argument is malformed: \"{twitchAnnounceChannelsRepository}\"')
         elif twitchAnnounceSettingsHelper is None:
@@ -58,14 +62,15 @@ class CynanBotDiscord(commands.Bot):
         elif twitchLiveUsersRepository is None:
             raise ValueError(f'twitchLiveUsersRepository argument is malformed: \"{twitchLiveUsersRepository}\"')
 
-        self.__analogueAnnounceChannelsRepository = analogueAnnounceChannelsRepository
-        self.__analogueSettingsHelper = analogueSettingsHelper
-        self.__analogueStoreRepository = analogueStoreRepository
-        self.__authHelper = authHelper
-        self.__generalSettingsHelper = generalSettingsHelper
-        self.__twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository
-        self.__twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
-        self.__twitchLiveUsersRepository = twitchLiveUsersRepository
+        self.__analogueAnnounceChannelsRepository: AnalogueAnnounceChannelsRepository = analogueAnnounceChannelsRepository
+        self.__analogueSettingsHelper: AnalogueSettingsHelper = analogueSettingsHelper
+        self.__analogueStoreRepository: AnalogueStoreRepository = analogueStoreRepository
+        self.__authHelper: AuthHelper = authHelper
+        self.__generalSettingsHelper: GeneralSettingsHelper = generalSettingsHelper
+        self.__timber: Timber = timber
+        self.__twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository
+        self.__twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
+        self.__twitchLiveUsersRepository: TwitchLiveUsersRepository = twitchLiveUsersRepository
 
         now = datetime.utcnow()
         self.__lastAnalogueCheckTime = now - timedelta(seconds = self.__analogueSettingsHelper.getRefreshEverySeconds())
@@ -78,7 +83,7 @@ class CynanBotDiscord(commands.Bot):
             raise error
 
     async def on_ready(self):
-        print(f'{self.user} is ready!')
+        self.__timber.log('CynanBotDiscord', f'{self.user} is ready!')
         self.loop.create_task(self.__beginLooping())
 
     async def addAnaloguePriorityProduct(self, ctx):
@@ -103,7 +108,7 @@ class CynanBotDiscord(commands.Bot):
             discordChannelId = ctx.channel.id
         )
 
-        print(f'Added Analogue priority product monitor for {analoguePriorityProduct.toStr()} in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
+        self.__timber.log('CynanBotDiscord', f'Added Analogue priority product monitor for {analoguePriorityProduct.toStr()} in {ctx.channel.guild.name}:{ctx.channel.name}')
         await ctx.send(f'added Analogue priority product monitor for `{analoguePriorityProduct.toStr()}`')
 
     async def addAnalogueUser(self, ctx):
@@ -136,7 +141,7 @@ class CynanBotDiscord(commands.Bot):
             usersStrings.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
         usersString = ', '.join(usersStrings)
-        print(f'Added Analogue user(s) to notify in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
+        self.__timber.log('CynanBotDiscord', f'Added Analogue user(s) to notify in {ctx.channel.guild.name}:{ctx.channel.name}')
         await ctx.send(f'added {usersString} to Analogue announce users')
 
     async def addTwitchUser(self, ctx):
@@ -184,7 +189,7 @@ class CynanBotDiscord(commands.Bot):
 
         self.__twitchAnnounceChannelsRepository.addUser(user, ctx.channel.id)
 
-        print(f'Added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to Twitch announce users ({utils.getNowTimeText()})')
+        self.__timber.log('CynanBotDiscord', f'Added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to Twitch announce users')
         await ctx.send(f'added `{user.getDiscordNameAndDiscriminator()}` (ttv/{user.getTwitchName()}) to Twitch announce users')
 
     async def __beginLooping(self):
@@ -231,7 +236,7 @@ class CynanBotDiscord(commands.Bot):
             if utils.isValidStr(text):
                 channel = await self.__fetchChannel(analogueAnnounceChannel.getDiscordChannelId())
                 await channel.send(text)
-                print(f'Announced Analogue store stock in {channel.guild.name}:{channel.name}')
+                self.__timber.log('CynanBotDiscord', f'Announced Analogue store stock in {channel.guild.name}:{channel.name}')
 
     async def __checkTwitchStreams(self):
         now = datetime.utcnow()
@@ -270,7 +275,7 @@ class CynanBotDiscord(commands.Bot):
                 guildMember = await channel.guild.fetch_member(user.getDiscordId())
 
                 if guildMember is None:
-                    print(f'Couldn\'t find user ID {user.getDiscordId()} in guild {channel.guild.name}, removing them from this channel\'s Twitch announce users...')
+                    self.__timber.log('CynanBotDiscord', f'Couldn\'t find user ID {user.getDiscordId()} in guild {channel.guild.name}, removing them from this channel\'s Twitch announce users...')
                     self.__twitchAnnounceChannelsRepository.removeUser(user, discordChannelId)
                 else:
                     announceChannelNames.append(f'{channel.guild.name}:{channel.name}')
@@ -278,7 +283,7 @@ class CynanBotDiscord(commands.Bot):
 
             if utils.hasItems(announceChannelNames):
                 channelNames = ', '.join(announceChannelNames)
-                print(f'Announced Twitch live stream for {user.getDiscordNameAndDiscriminator()} in {channelNames}')
+                self.__timber.log('CynanBotDiscord', f'Announced Twitch live stream for {user.getDiscordNameAndDiscriminator()} in {channelNames}')
 
     async def __createPriorityStockAvailableMessageText(
         self,
@@ -469,7 +474,7 @@ class CynanBotDiscord(commands.Bot):
             discordChannelId = ctx.channel.id
         )
 
-        print(f'Removed Analogue priority product monitor for {analoguePriorityProduct.toStr()} in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
+        self.__timber.log('CynanBotDiscord', f'Removed Analogue priority product monitor for {analoguePriorityProduct.toStr()} in {ctx.channel.guild.name}:{ctx.channel.name}')
         await ctx.send(f'removed Analogue priority product monitor for `{analoguePriorityProduct.toStr()}`')
 
     async def removeAnalogueUser(self, ctx):
@@ -502,7 +507,7 @@ class CynanBotDiscord(commands.Bot):
             usersStrings.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
         usersString = ', '.join(usersStrings)
-        print(f'Removed Analogue user(s) to notify in {ctx.channel.guild.name}:{ctx.channel.name} ({utils.getNowTimeText()})')
+        self.__timber.log('CynanBotDiscord', f'Removed Analogue user(s) to notify in {ctx.channel.guild.name}:{ctx.channel.name}')
         await ctx.send(f'removed {usersString} from Analogue announce users')
 
     async def removeTwitchUser(self, ctx):
@@ -531,5 +536,5 @@ class CynanBotDiscord(commands.Bot):
             userNames.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
         usersString = ', '.join(userNames)
-        print(f'Removed {usersString} from Twitch announce users ({utils.getNowTimeText()})')
+        self.__timber.log('CynanBotDiscord', f'Removed {usersString} from Twitch announce users')
         await ctx.send(f'removed {usersString} from Twitch announce users')

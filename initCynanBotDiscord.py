@@ -7,6 +7,7 @@ from authHelper import AuthHelper
 from CynanBotCommon.analogue.analogueStoreRepository import \
     AnalogueStoreRepository
 from CynanBotCommon.backingDatabase import BackingDatabase
+from CynanBotCommon.timber.timber import Timber
 from CynanBotCommon.twitchTokensRepository import TwitchTokensRepository
 from cynanBotDiscord import CynanBotDiscord
 from generalSettingsHelper import GeneralSettingsHelper
@@ -17,6 +18,7 @@ from twitchLiveUsersRepository import TwitchLiveUsersRepository
 from usersRepository import UsersRepository
 
 
+timber = Timber()
 analogueSettingsHelper = AnalogueSettingsHelper()
 authHelper = AuthHelper()
 backingDatabase = BackingDatabase()
@@ -105,5 +107,5 @@ async def removeTwitchUser(ctx, *args):
 ###################################################################################################
 
 
-print('Starting CynanBotDiscord...')
+timber.log('initCynanBotDiscord', 'Starting CynanBotDiscord...')
 cynanBotDiscord.run(authHelper.requireDiscordToken())
