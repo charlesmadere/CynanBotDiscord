@@ -38,6 +38,7 @@ cynanBotDiscord = CynanBotDiscord(
     ),
     analogueSettingsHelper = analogueSettingsHelper,
     analogueStoreRepository = AnalogueStoreRepository(
+        timber = timber,
         cacheTimeDelta = timedelta(seconds = analogueSettingsHelper.getAnalogueStoreCacheSeconds())
     ),
     authHelper = authHelper,
@@ -50,6 +51,7 @@ cynanBotDiscord = CynanBotDiscord(
         twitchLiveHelper = TwitchLiveHelper(
             twitchClientId = authHelper.requireTwitchClientId(),
             twitchClientSecret = authHelper.requireTwitchClientSecret(),
+            timber = timber,
             twitchTokensRepository = TwitchTokensRepository()
         ),
         usersRepository = usersRepository
