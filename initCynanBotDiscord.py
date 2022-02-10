@@ -52,7 +52,9 @@ cynanBotDiscord = CynanBotDiscord(
             twitchClientId = authHelper.requireTwitchClientId(),
             twitchClientSecret = authHelper.requireTwitchClientSecret(),
             timber = timber,
-            twitchTokensRepository = TwitchTokensRepository()
+            twitchTokensRepository = TwitchTokensRepository(
+                timber = timber
+            )
         ),
         usersRepository = usersRepository
     )
