@@ -171,8 +171,8 @@ class TwitchLiveHelper():
                 timeout = utils.getDefaultTimeout()
             )
         except (ConnectionError, HTTPError, MaxRetryError, NewConnectionError, ReadTimeout, Timeout, TooManyRedirects) as e:
-            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch streams: {e}')
-            raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch streams: {e}')
+            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
+            raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
 
         jsonResponse: Dict[str, object] = None
         try:
