@@ -14,7 +14,7 @@ class AnalogueSettingsHelper():
         if not utils.isValidStr(analogueSettingsFile):
             raise ValueError(f'analogueSettingsFile argument is malformed: \"{analogueSettingsFile}\"')
 
-        self.__analogueSettingsFile = analogueSettingsFile
+        self.__analogueSettingsFile: str = analogueSettingsFile
 
     def getAnalogueStoreCacheSeconds(self) -> int:
         refreshEverySeconds = self.getRefreshEverySeconds()
@@ -44,7 +44,7 @@ class AnalogueSettingsHelper():
 
         return refreshEverySeconds
 
-    def __readJson(self) -> Dict:
+    def __readJson(self) -> Dict[str, object]:
         if not os.path.exists(self.__analogueSettingsFile):
             raise FileNotFoundError(f'Analogue settings file not found: \"{self.__analogueSettingsFile}\"')
 

@@ -14,13 +14,13 @@ class GeneralSettingsHelper():
         if not utils.isValidStr(generalSettingsFile):
             raise ValueError(f'generalSettingsFile argument is malformed: \"{generalSettingsFile}\"')
 
-        self.__generalSettingsFile = generalSettingsFile
+        self.__generalSettingsFile: str = generalSettingsFile
 
     def getRefreshEverySeconds(self) -> int:
         jsonContents = self.__readJson()
         return utils.getIntFromDict(jsonContents, 'refreshEverySeconds')
 
-    def __readJson(self) -> Dict:
+    def __readJson(self) -> Dict[str, object]:
         if not os.path.exists(self.__generalSettingsFile):
             raise FileNotFoundError(f'generalSettingsFile not found: \"{self.__generalSettingsFile}\"')
 

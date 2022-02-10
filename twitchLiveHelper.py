@@ -38,17 +38,17 @@ class TwitchLiveData():
         elif not utils.isValidStr(userName):
             raise ValueError(f'userName argument is malformed: \"{userName}\"')
 
-        self.__streamId = streamId
-        self.__userId = userId
-        self.__userLogin = userLogin
-        self.__userName = userName
-        self.__viewerCount = viewerCount
-        self.__gameId = gameId
-        self.__gameName = gameName
-        self.__language = language
-        self.__streamType = streamType
-        self.__thumbnailUrl = thumbnailUrl
-        self.__title = title
+        self.__streamId: str = streamId
+        self.__userId: str = userId
+        self.__userLogin: str = userLogin
+        self.__userName: str = userName
+        self.__viewerCount: int = viewerCount
+        self.__gameId: str = gameId
+        self.__gameName: str = gameName
+        self.__language: str = language
+        self.__streamType: str = streamType
+        self.__thumbnailUrl: str = thumbnailUrl
+        self.__title: str = title
 
     def getGameId(self) -> str:
         return self.__gameId
@@ -158,12 +158,12 @@ class TwitchLiveHelper():
         userNamesList: List[str] = list()
         for user in users:
             userNamesList.append(user.getTwitchName())
-        userNames = '&user_login='.join(userNamesList)
+        userNamesStr: str = '&user_login='.join(userNamesList)
 
         rawResponse = None
         try:
             rawResponse = requests.get(
-                url = f'https://api.twitch.tv/helix/streams?user_login={userNames}',
+                url = f'https://api.twitch.tv/helix/streams?user_login={userNamesStr}',
                 headers = {
                     'Authorization': f'Bearer {self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)}',
                     'Client-Id': self.__twitchClientId
