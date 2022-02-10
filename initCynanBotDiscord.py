@@ -43,6 +43,7 @@ cynanBotDiscord = CynanBotDiscord(
     ),
     authHelper = authHelper,
     generalSettingsHelper = GeneralSettingsHelper(),
+    timber = timber,
     twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository,
     twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper,
     twitchLiveUsersRepository = TwitchLiveUsersRepository(
