@@ -1,6 +1,7 @@
 import asyncio
 import urllib
 from datetime import datetime, timedelta
+from typing import List
 
 import discord
 from discord.ext import commands
@@ -125,7 +126,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to add')
             return
 
-        users = list()
+        users: List[User] = list()
         for mention in mentions:
             user = User(
                 discordDiscriminator = mention.discriminator,
@@ -136,7 +137,7 @@ class CynanBotDiscord(commands.Bot):
             self.__analogueAnnounceChannelsRepository.addUser(user, ctx.channel.id)
             users.append(user)
 
-        usersStrings = list()
+        usersStrings: List[str] = list()
         for user in users:
             usersStrings.append(f'`{user.getDiscordNameAndDiscriminator()}`')
 
