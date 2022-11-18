@@ -1,17 +1,19 @@
 from datetime import datetime
+from typing import Optional
 
 import CynanBotCommon.utils as utils
+from CynanBotCommon.users.userInterface import UserInterface
 
 
-class User():
+class User(UserInterface):
 
     def __init__(
         self,
         discordDiscriminator: str,
         discordId: str,
         discordName: str,
-        mostRecentStreamDateTime: datetime = None,
-        twitchName: str = None
+        mostRecentStreamDateTime: Optional[datetime] = None,
+        twitchName: Optional[str] = None
     ):
         if not utils.isValidStr(discordDiscriminator):
             raise ValueError(f'discordDiscriminator argument is malformed: \"{discordDiscriminator}\"')
@@ -20,11 +22,11 @@ class User():
         elif not utils.isValidStr(discordName):
             raise ValueError(f'discordName argument is malformed: \"{discordName}\"')
 
-        self.__discordDiscriminator = discordDiscriminator
-        self.__discordId = discordId
-        self.__discordName = discordName
-        self.__mostRecentStreamDateTime = mostRecentStreamDateTime
-        self.__twitchName = twitchName
+        self.__discordDiscriminator: str = discordDiscriminator
+        self.__discordId: str = discordId
+        self.__discordName: str = discordName
+        self.__mostRecentStreamDateTime: Optional[datetime] = mostRecentStreamDateTime
+        self.__twitchName: Optional[str] = twitchName
 
     def getDiscordDiscriminator(self) -> str:
         return self.__discordDiscriminator
@@ -37,6 +39,9 @@ class User():
 
     def getDiscordNameAndDiscriminator(self) -> str:
         return f'{self.__discordName}#{self.__discordDiscriminator}'
+
+    def getHandle(self) -> str:
+        return self.getDiscordName()
 
     def getMostRecentStreamDateTime(self) -> datetime:
         return self.__mostRecentStreamDateTime

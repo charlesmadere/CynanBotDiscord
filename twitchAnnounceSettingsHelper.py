@@ -14,7 +14,7 @@ class TwitchAnnounceSettingsHelper():
         if not utils.isValidStr(twitchAnnounceSettingsFile):
             raise ValueError(f'twitchAnnounceSettingsFile argument is malformed: \"{twitchAnnounceSettingsFile}\"')
 
-        self.__twitchAnnounceSettingsFile = twitchAnnounceSettingsFile
+        self.__twitchAnnounceSettingsFile: str = twitchAnnounceSettingsFile
 
     def getAnnounceFalloffMinutes(self) -> int:
         jsonContents = self.__readJson()

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List
+from typing import Dict, List, Optional, Set
 
 import CynanBotCommon.utils as utils
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
@@ -24,9 +24,9 @@ class TwitchLiveUserData():
         elif user is None:
             raise ValueError(f'user argument is malformed: \"{user}\"')
 
-        self.__discordChannelIds = discordChannelIds
-        self.__twitchLiveData = twitchLiveData
-        self.__user = user
+        self.__discordChannelIds: List[int] = discordChannelIds
+        self.__twitchLiveData: TwitchLiveData = twitchLiveData
+        self.__user: User = user
 
     def getDiscordChannelIds(self) -> List[int]:
         return self.__discordChannelIds
@@ -56,22 +56,22 @@ class TwitchLiveUsersRepository():
         elif usersRepository is None:
             raise ValueError(f'usersRepository argument is malformed: \"{usersRepository}\"')
 
-        self.__twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository
-        self.__twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
-        self.__twitchLiveHelper = twitchLiveHelper
-        self.__usersRepository = usersRepository
+        self.__twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository
+        self.__twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
+        self.__twitchLiveHelper: TwitchLiveHelper = twitchLiveHelper
+        self.__usersRepository: UsersRepository = usersRepository
 
-    def fetchTwitchLiveUserData(self) -> List[TwitchLiveUserData]:
-        twitchAnnounceChannels = self.__twitchAnnounceChannelsRepository.fetchTwitchAnnounceChannels()
+    async def fetchTwitchLiveUserData(self) -> List[TwitchLiveUserData]:
+        twitchAnnounceChannels = await self.__twitchAnnounceChannelsRepository.fetchTwitchAnnounceChannels()
         if not utils.hasItems(twitchAnnounceChannels):
             return None
 
         now = datetime.utcnow()        
-        userIdsToChannels = dict()
-        userIdsToUsers = dict()
+        userIdsToChannels: Dict[str, Set[int]] = dict()
+        userIdsToUsers: Dict[str, User] = dict()
 
         for twitchAnnounceChannel in twitchAnnounceChannels:
-            if utils.hasItems(twitchAnnounceChannel.getUsers()):
+            if twitchAnnounceChannel.hasUsers():
                 for user in twitchAnnounceChannel.getUsers():
                     if user.getDiscordId() not in userIdsToChannels:
                         userIdsToChannels[user.getDiscordId()] = set()
@@ -84,13 +84,13 @@ class TwitchLiveUsersRepository():
         if not utils.hasItems(userIdsToChannels) or not utils.hasItems(userIdsToUsers):
             return None
 
-        users = list()
+        users: List[User] = list()
         for user in userIdsToUsers.values():
             users.append(user)
 
-        whoIsLive = None
+        whoIsLive: Optional[Dict[User, TwitchLiveData]] = None
         try:
-            whoIsLive = self.__twitchLiveHelper.fetchWhoIsLive(users)
+            whoIsLive = await self.__twitchLiveHelper.fetchWhoIsLive(users)
         except (RuntimeError, ValueError):
             return None
 
@@ -98,14 +98,14 @@ class TwitchLiveUsersRepository():
             return None
 
         announceTimeDelta = timedelta(minutes = self.__twitchAnnounceSettingsHelper.getAnnounceFalloffMinutes())
-        removeTheseUsers = list()
+        removeTheseUsers: List[User] = list()
 
         for user in whoIsLive:
             if user.hasMostRecentStreamDateTime() and user.getMostRecentStreamDateTime() + announceTimeDelta >= now:
                 removeTheseUsers.append(user)
 
             user.setMostRecentStreamDateTime(now)
-            self.__usersRepository.addOrUpdateUser(user)
+            await self.__usersRepository.addOrUpdateUser(user)
 
         if utils.hasItems(removeTheseUsers):
             for removeThisUser in removeTheseUsers:
@@ -114,7 +114,7 @@ class TwitchLiveUsersRepository():
         if not utils.hasItems(whoIsLive):
             return None
 
-        twitchLiveUserDataList = list()
+        twitchLiveUserDataList: List[TwitchLiveUserData] = list()
         for user, twitchLiveData in whoIsLive.items():
             twitchLiveUserDataList.append(TwitchLiveUserData(
                 discordChannelIds = userIdsToChannels[user.getDiscordId()],

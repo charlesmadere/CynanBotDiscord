@@ -1,6 +1,6 @@
 import locale
 from json.decoder import JSONDecodeError
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import requests
 from requests import ConnectionError, HTTPError, Timeout
@@ -9,7 +9,7 @@ from urllib3.exceptions import MaxRetryError, NewConnectionError
 
 import CynanBotCommon.utils as utils
 from CynanBotCommon.timber.timber import Timber
-from CynanBotCommon.twitchTokensRepository import TwitchTokensRepository
+from CynanBotCommon.twitch.twitchTokensRepository import TwitchTokensRepository
 from user import User
 
 
@@ -141,10 +141,10 @@ class TwitchLiveHelper():
         self.__twitchTokensRepository: TwitchTokensRepository = twitchTokensRepository
         self.__twitchHandle: str = twitchHandle
 
-    def fetchWhoIsLive(self, users: List[User]) -> Dict[User, TwitchLiveData]:
-        return self.__fetchWhoIsLive(users = users, isRetry = False)
+    async def fetchWhoIsLive(self, users: List[User]) -> Optional[Dict[User, TwitchLiveData]]:
+        return await self.__fetchWhoIsLive(users = users, isRetry = False)
 
-    def __fetchWhoIsLive(self, users: List[User], isRetry: bool) -> Dict[User, TwitchLiveData]:
+    async def __fetchWhoIsLive(self, users: List[User], isRetry: bool) -> Optional[Dict[User, TwitchLiveData]]:
         if not utils.isValidBool(isRetry):
             raise ValueError(f'isRetry argument is malformed: \"{isRetry}\"')
 
@@ -160,32 +160,34 @@ class TwitchLiveHelper():
             userNamesList.append(user.getTwitchName())
         userNamesStr: str = '&user_login='.join(userNamesList)
 
+        twitchAccessToken = await self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)
+
         rawResponse = None
         try:
             rawResponse = requests.get(
                 url = f'https://api.twitch.tv/helix/streams?user_login={userNamesStr}',
                 headers = {
-                    'Authorization': f'Bearer {self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)}',
+                    'Authorization': f'Bearer {twitchAccessToken}',
                     'Client-Id': self.__twitchClientId
                 },
                 timeout = utils.getDefaultTimeout()
             )
         except (ConnectionError, HTTPError, MaxRetryError, NewConnectionError, ReadTimeout, Timeout, TooManyRedirects) as e:
-            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
+            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
 
         jsonResponse: Dict[str, object] = None
         try:
             jsonResponse = rawResponse.json()
         except JSONDecodeError as e:
-            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
+            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
 
         if 'error' in jsonResponse and len(jsonResponse['error']) >= 1 or 'data' not in jsonResponse:
             self.__timber.log('TwitchLiveHelper', f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
 
             if isRetry:
-                raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop! ({utils.getNowTimeText(includeSeconds = True)})')
+                raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop!')
             elif 'status' in jsonResponse and utils.getIntFromDict(jsonResponse, 'status') == 401:
                 self.__twitchTokensRepository.validateAndRefreshAccessToken(
                     twitchClientId = self.__twitchClientId,
@@ -193,7 +195,7 @@ class TwitchLiveHelper():
                     twitchHandle = self.__twitchHandle
                 )
 
-                return self.__fetchWhoIsLive(users = users, isRetry = True)
+                return await self.__fetchWhoIsLive(users = users, isRetry = True)
             else:
                 raise RuntimeError(f'Unknown error returned by Twitch API: {jsonResponse}')
 

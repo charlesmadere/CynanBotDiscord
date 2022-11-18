@@ -1,8 +1,9 @@
 from sqlite3 import OperationalError
-from typing import List
+from typing import Any, List, Optional
 
 import CynanBotCommon.utils as utils
-from CynanBotCommon.backingDatabase import BackingDatabase
+from CynanBotCommon.storage.backingDatabase import BackingDatabase
+from CynanBotCommon.storage.databaseConnection import DatabaseConnection
 from user import User
 from usersRepository import UsersRepository
 
@@ -14,16 +15,18 @@ class TwitchAnnounceChannel():
         discordChannelId: int,
         users: List[User] = None
     ):
-        if not utils.isValidNum(discordChannelId):
+        if not utils.isValidInt(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
+        elif discordChannelId < 0 or discordChannelId > utils.getLongMaxSafeSize():
+            raise ValueError(f'discordChannelId argument is out of bounds: {discordChannelId}')
 
-        self.__discordChannelId = discordChannelId
-        self.__users = users
+        self.__discordChannelId: int = discordChannelId
+        self.__users: Optional[List[User]] = users
 
     def getDiscordChannelId(self) -> int:
         return self.__discordChannelId
 
-    def getUsers(self) -> List[User]:
+    def getUsers(self) -> Optional[List[User]]:
         return self.__users
 
     def hasUsers(self) -> bool:
@@ -38,97 +41,90 @@ class TwitchAnnounceChannelsRepository():
         elif usersRepository is None:
             raise ValueError(f'usersRepository argument is malformed: \"{usersRepository}\"')
 
-        self.__backingDatabase = backingDatabase
-        self.__usersRepository = usersRepository
+        self.__backingDatabase: BackingDatabase = backingDatabase
+        self.__usersRepository: UsersRepository = usersRepository
 
-        connection = self.__backingDatabase.getConnection()
-        connection.execute(
-            '''
-                CREATE TABLE IF NOT EXISTS twitchAnnounceChannels (
-                    discordChannelId TEXT NOT NULL UNIQUE COLLATE NOCASE
-                )
-            '''
-        )
-        connection.commit()
+        self.__isDatabaseReady: bool = False
 
-    def addUser(self, user: User, discordChannelId: int):
+    async def addUser(self, user: User, discordChannelId: int):
         if user is None:
             raise ValueError(f'user argument is malformed: \"{user}\"')
-        elif not utils.isValidNum(discordChannelId):
+        elif not utils.isValidInt(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
+        elif discordChannelId < 0 or discordChannelId > utils.getLongMaxSafeSize():
+            raise ValueError(f'discordChannelId argument is out of bounds: {discordChannelId}')
 
-        self.__createTablesForDiscordChannelId(discordChannelId)
-        self.__usersRepository.addOrUpdateUser(user)
+        await self.__createTablesForDiscordChannelId(discordChannelId)
+        await self.__usersRepository.addOrUpdateUser(user)
 
-        connection = self.__backingDatabase.getConnection()
-        cursor = connection.cursor()
-        cursor.execute(
+        connection = await self.__getDatabaseConnection()
+        await connection.execute(
             f'''
                 INSERT INTO twitchAnnounceChannel_{discordChannelId} (discordUserId)
-                VALUES (?)
+                VALUES ($1)
                 ON CONFLICT (discordUserId) DO NOTHING
             ''',
-            ( str(user.getDiscordId()), )
+            user.getDiscordId()
         )
-        connection.commit()
-        cursor.close()
 
-    def __createTablesForDiscordChannelId(self, discordChannelId: int):
-        if not utils.isValidNum(discordChannelId):
+        await connection.close()
+
+    async def __createTablesForDiscordChannelId(self, discordChannelId: int):
+        if not utils.isValidInt(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
+        elif discordChannelId < 0 or discordChannelId > utils.getLongMaxSafeSize():
+            raise ValueError(f'discordChannelId argument is out of bounds: {discordChannelId}')
 
-        connection = self.__backingDatabase.getConnection()
-        cursor = connection.cursor()
-        cursor.execute(
+        connection = await self.__getDatabaseConnection()
+        await connection.execute(
             '''
                 INSERT INTO twitchAnnounceChannels (discordChannelId)
-                VALUES (?)
+                VALUES ($1)
                 ON CONFLICT (discordChannelId) DO NOTHING
             ''',
-            ( str(discordChannelId), )
+            str(discordChannelId)
         )
-        connection.commit()
-        cursor.close()
 
-        connection = self.__backingDatabase.getConnection()
-        connection.execute(
+        await connection.execute(
             f'''
                 CREATE TABLE IF NOT EXISTS twitchAnnounceChannel_{discordChannelId} (
                     discordUserId TEXT NOT NULL UNIQUE COLLATE NOCASE
                 )
             '''
         )
-        connection.commit()
 
-    def fetchTwitchAnnounceChannel(self, discordChannelId: int) ->  TwitchAnnounceChannel:
-        if not utils.isValidNum(discordChannelId):
+        await connection.close()
+
+    async def fetchTwitchAnnounceChannel(self, discordChannelId: int) ->  TwitchAnnounceChannel:
+        if not utils.isValidInt(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
+        elif discordChannelId < 0 or discordChannelId > utils.getLongMaxSafeSize():
+            raise ValueError(f'discordChannelId argument is out of bounds: {discordChannelId}')
 
-        cursor = self.__backingDatabase.getConnection().cursor()
-        rows = None
+        connection = await self.__getDatabaseConnection()
+        rows: Optional[List[List[Any]]] = None
 
         try:
-            cursor.execute(f'SELECT discordUserId FROM twitchAnnounceChannel_{discordChannelId}')
-            rows = cursor.fetchall()
+            rows = await connection.fetchRows(f'SELECT discordUserId FROM twitchAnnounceChannel_{discordChannelId}')
         except OperationalError:
             # this error can be safely ignored, it just means the above table doesn't exist
             pass
 
         if not utils.hasItems(rows):
-            cursor.close()
+            await connection.close()
             return TwitchAnnounceChannel(discordChannelId = discordChannelId)
 
-        users = list()
+        users: List[User] = list()
 
         for row in rows:
-            user = self.__usersRepository.fetchUser(row[0])
+            user = await self.__usersRepository.getUserAsync(row[0])
 
             if not user.hasTwitchName():
                 raise RuntimeError(f'Twitch announce user {user.getDiscordNameAndDiscriminator()} for channel {discordChannelId} has no Twitch name!')
 
             users.append(user)
 
-        cursor.close()
+        await connection.close()
         users.sort(key = lambda user: user.getDiscordName().lower())
 
         return TwitchAnnounceChannel(
@@ -136,43 +132,64 @@ class TwitchAnnounceChannelsRepository():
             users = users
         )
 
-    def fetchTwitchAnnounceChannels(self) -> List[TwitchAnnounceChannel]:
-        cursor = self.__backingDatabase.getConnection().cursor()
-        cursor.execute(f'SELECT discordChannelId FROM twitchAnnounceChannels')
-        rows = cursor.fetchall()
+    async def fetchTwitchAnnounceChannels(self) -> Optional[List[TwitchAnnounceChannel]]:
+        connection = await self.__getDatabaseConnection()
+        rows = await connection.fetchRow('SELECT discordChannelId FROM twitchAnnounceChannels')
 
         if not utils.hasItems(rows):
-            cursor.close()
+            await connection.close()
             return None
 
-        twitchAnnounceChannels = list()
+        twitchAnnounceChannels: List[TwitchAnnounceChannel] = list()
 
         for row in rows:
             twitchAnnounceChannel = self.fetchTwitchAnnounceChannel(int(row[0]))
             twitchAnnounceChannels.append(twitchAnnounceChannel)
 
+        await connection.close()
         return twitchAnnounceChannels
 
-    def removeUser(self, user: User, discordChannelId: int):
+    async def __getDatabaseConnection(self) -> DatabaseConnection:
+        await self.__initDatabaseTable()
+        return await self.__backingDatabase.getConnection()
+
+    async def __initDatabaseTable(self):
+        if self.__isDatabaseReady:
+            return
+
+        self.__isDatabaseReady = True
+
+        connection = await self.__backingDatabase.getConnection()
+        await connection.execute(
+            '''
+                CREATE TABLE IF NOT EXISTS twitchAnnounceChannels (
+                    discordChannelId TEXT NOT NULL UNIQUE COLLATE NOCASE
+                )
+            '''
+        )
+
+        await connection.close()
+
+    async def removeUser(self, user: User, discordChannelId: int):
         if user is None:
             raise ValueError(f'user argument is malformed: \"{user}\"')
-        elif not utils.isValidNum(discordChannelId):
+        elif not utils.isValidInt(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
+        elif discordChannelId < 0 or discordChannelId > utils.getLongMaxSafeSize():
+            raise ValueError(f'discordChannelId argument is out of bounds: {discordChannelId}')
 
-        connection = self.__backingDatabase.getConnection()
-        cursor = connection.cursor()
+        connection = await self.__getDatabaseConnection()
 
         try:
-            cursor.execute(
+            connection.execute(
                 f'''
                     DELETE FROM twitchAnnounceChannel_{discordChannelId}
-                    WHERE discordUserId = ?
+                    WHERE discordUserId = $1
                 ''',
-                ( str(user.getDiscordId()), )
+                user.getDiscordId()
             )
         except OperationalError:
             # this error can be safely ignored, it just means the above table doesn't exist
             pass
 
-        connection.commit()
-        cursor.close()
+        await connection.close()
