@@ -1,27 +1,43 @@
-from datetime import timedelta
+import asyncio
 
-from analogueAnnounceChannelsRepository import \
-    AnalogueAnnounceChannelsRepository
-from analogueSettingsHelper import AnalogueSettingsHelper
-from authHelper import AuthHelper
-from CynanBotCommon.analogue.analogueStoreRepository import \
-    AnalogueStoreRepository
-from CynanBotCommon.backingDatabase import BackingDatabase
+from authRepository import AuthRepository
+from CynanBotCommon.networkClientProvider import NetworkClientProvider
+from CynanBotCommon.storage.backingDatabase import BackingDatabase
+from CynanBotCommon.storage.backingPsqlDatabase import BackingPsqlDatabase
+from CynanBotCommon.storage.backingSqliteDatabase import BackingSqliteDatabase
+from CynanBotCommon.storage.databaseType import DatabaseType
+from CynanBotCommon.storage.psqlCredentialsProvider import \
+    PsqlCredentialsProvider
 from CynanBotCommon.timber.timber import Timber
-from CynanBotCommon.twitchTokensRepository import TwitchTokensRepository
+from CynanBotCommon.twitch.twitchTokensRepository import TwitchTokensRepository
 from cynanBotDiscord import CynanBotDiscord
-from generalSettingsHelper import GeneralSettingsHelper
+from generalSettingsRepository import GeneralSettingsRepository
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
-from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
+from twitchAnnounceSettingsRepository import TwitchAnnounceSettingsRepository
 from twitchLiveHelper import TwitchLiveHelper
 from twitchLiveUsersRepository import TwitchLiveUsersRepository
 from usersRepository import UsersRepository
 
+eventLoop = asyncio.get_event_loop()
+timber = Timber(
+    eventLoop = eventLoop
+)
+authHelper = AuthRepository()
+generalSettingsRepository = GeneralSettingsRepository()
 
-timber = Timber()
-analogueSettingsHelper = AnalogueSettingsHelper()
-authHelper = AuthHelper()
-backingDatabase = BackingDatabase()
+backingDatabase: BackingDatabase = None
+if generalSettingsRepository.getAll().requireDatabaseType() == DatabaseType.POSTGRESQL:
+    backingDatabase = BackingPsqlDatabase(
+        eventLoop = eventLoop,
+        psqlCredentialsProvider = PsqlCredentialsProvider()
+    )
+elif generalSettingsRepository.getAll().requireDatabaseType() == DatabaseType.SQLITE:
+    backingDatabase = BackingSqliteDatabase(
+        eventLoop = eventLoop
+    )
+else:
+    raise RuntimeError(f'Unknown/misconfigured database type: \"{generalSettingsRepository.getAll().requireDatabaseType()}\"')
+
 usersRepository = UsersRepository(
     backingDatabase = backingDatabase
 )
@@ -29,31 +45,27 @@ twitchAnnounceChannelsRepository = TwitchAnnounceChannelsRepository(
     backingDatabase = backingDatabase,
     usersRepository = usersRepository
 )
-twitchAnnounceSettingsHelper = TwitchAnnounceSettingsHelper()
+twitchAnnounceSettingsRepository = TwitchAnnounceSettingsRepository()
+networkClientProvider = NetworkClientProvider(
+    eventLoop = eventLoop
+)
 
 cynanBotDiscord = CynanBotDiscord(
-    analogueAnnounceChannelsRepository = AnalogueAnnounceChannelsRepository(
-        backingDatabase = backingDatabase,
-        usersRepository = usersRepository
-    ),
-    analogueSettingsHelper = analogueSettingsHelper,
-    analogueStoreRepository = AnalogueStoreRepository(
-        timber = timber,
-        cacheTimeDelta = timedelta(seconds = analogueSettingsHelper.getAnalogueStoreCacheSeconds())
-    ),
-    authHelper = authHelper,
-    generalSettingsHelper = GeneralSettingsHelper(),
+    authRepository = authHelper,
+    generalSettingsRepository = generalSettingsRepository,
     timber = timber,
     twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository,
-    twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper,
+    twitchAnnounceSettingsRepository = twitchAnnounceSettingsRepository,
     twitchLiveUsersRepository = TwitchLiveUsersRepository(
         twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository,
-        twitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper,
+        twitchAnnounceSettingsRepository = twitchAnnounceSettingsRepository,
         twitchLiveHelper = TwitchLiveHelper(
+            networkClientProvider = networkClientProvider,
             twitchClientId = authHelper.requireTwitchClientId(),
             twitchClientSecret = authHelper.requireTwitchClientSecret(),
             timber = timber,
             twitchTokensRepository = TwitchTokensRepository(
+                networkClientProvider = networkClientProvider,
                 timber = timber
             )
         ),
@@ -72,36 +84,12 @@ cynanBotDiscord = CynanBotDiscord(
 ###################################################################################################
 
 @cynanBotDiscord.command()
-async def addAnaloguePriorityProduct(ctx, *args):
-    await cynanBotDiscord.addAnaloguePriorityProduct(ctx)
-
-@cynanBotDiscord.command()
-async def addAnalogueUser(ctx, *args):
-    await cynanBotDiscord.addAnalogueUser(ctx)
-
-@cynanBotDiscord.command()
 async def addTwitchUser(ctx, *args):
     await cynanBotDiscord.addTwitchUser(ctx)
 
 @cynanBotDiscord.command()
-async def listAnaloguePriorityProducts(ctx, *args):
-    await cynanBotDiscord.listAnaloguePriorityProducts(ctx)
-
-@cynanBotDiscord.command()
-async def listAnalogueUsers(ctx, *args):
-    await cynanBotDiscord.listAnalogueUsers(ctx)
-
-@cynanBotDiscord.command()
 async def listTwitchUsers(ctx, *args):
     await cynanBotDiscord.listTwitchUsers(ctx)
-
-@cynanBotDiscord.command()
-async def removeAnaloguePriorityProduct(ctx, *args):
-    await cynanBotDiscord.removeAnaloguePriorityProduct(ctx)
-
-@cynanBotDiscord.command()
-async def removeAnalogueUser(ctx, *args):
-    await cynanBotDiscord.removeAnalogueUser(ctx)
 
 @cynanBotDiscord.command()
 async def removeTwitchUser(ctx, *args):

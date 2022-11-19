@@ -1,13 +1,11 @@
 import locale
 from json.decoder import JSONDecodeError
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-import requests
-from requests import ConnectionError, HTTPError, Timeout
-from requests.exceptions import ReadTimeout, TooManyRedirects
-from urllib3.exceptions import MaxRetryError, NewConnectionError
+import aiohttp
 
 import CynanBotCommon.utils as utils
+from CynanBotCommon.networkClientProvider import NetworkClientProvider
 from CynanBotCommon.timber.timber import Timber
 from CynanBotCommon.twitch.twitchTokensRepository import TwitchTokensRepository
 from user import User
@@ -118,13 +116,16 @@ class TwitchLiveHelper():
 
     def __init__(
         self,
+        networkClientProvider: NetworkClientProvider,
         twitchClientId: str,
         twitchClientSecret: str,
         timber: Timber,
         twitchTokensRepository: TwitchTokensRepository,
         twitchHandle: str = 'CynanBot'
     ):
-        if not utils.isValidStr(twitchClientId):
+        if networkClientProvider is None:
+            raise ValueError(f'networkClientProvider argument is malformed: \"{networkClientProvider}\"')
+        elif not utils.isValidStr(twitchClientId):
             raise ValueError(f'twitchClientId argument is malformed: \"{twitchClientId}\"')
         elif not utils.isValidStr(twitchClientSecret):
             raise ValueError(f'twitchClientSecret argument is malformed: \"{twitchClientSecret}\"')
@@ -135,6 +136,7 @@ class TwitchLiveHelper():
         elif not utils.isValidStr(twitchHandle):
             raise ValueError(f'twitchHandle argument is malformed: \"{twitchHandle}\"')
 
+        self.__networkClientProvider: NetworkClientProvider = networkClientProvider
         self.__twitchClientId: str = twitchClientId
         self.__twitchClientSecret: str = twitchClientSecret
         self.__timber: Timber = timber
@@ -161,24 +163,24 @@ class TwitchLiveHelper():
         userNamesStr: str = '&user_login='.join(userNamesList)
 
         twitchAccessToken = await self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)
+        clientSession = await self.__networkClientProvider.get()
 
         rawResponse = None
         try:
-            rawResponse = requests.get(
+            rawResponse = await clientSession.get(
                 url = f'https://api.twitch.tv/helix/streams?user_login={userNamesStr}',
                 headers = {
                     'Authorization': f'Bearer {twitchAccessToken}',
                     'Client-Id': self.__twitchClientId
-                },
-                timeout = utils.getDefaultTimeout()
+                }
             )
-        except (ConnectionError, HTTPError, MaxRetryError, NewConnectionError, ReadTimeout, Timeout, TooManyRedirects) as e:
+        except (aiohttp.ClientError, TimeoutError) as e:
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
 
-        jsonResponse: Dict[str, object] = None
+        jsonResponse: Optional[Dict[str, object]] = None
         try:
-            jsonResponse = rawResponse.json()
+            jsonResponse = await rawResponse.json()
         except JSONDecodeError as e:
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
@@ -189,7 +191,7 @@ class TwitchLiveHelper():
             if isRetry:
                 raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop!')
             elif 'status' in jsonResponse and utils.getIntFromDict(jsonResponse, 'status') == 401:
-                self.__twitchTokensRepository.validateAndRefreshAccessToken(
+                await self.__twitchTokensRepository.validateAndRefreshAccessToken(
                     twitchClientId = self.__twitchClientId,
                     twitchClientSecret = self.__twitchClientSecret,
                     twitchHandle = self.__twitchHandle
@@ -199,7 +201,7 @@ class TwitchLiveHelper():
             else:
                 raise RuntimeError(f'Unknown error returned by Twitch API: {jsonResponse}')
 
-        dataArray = jsonResponse.get('data')
+        dataArray: Optional[List[Dict[str, Any]]] = jsonResponse.get('data')
         if not utils.hasItems(dataArray):
             return None
 

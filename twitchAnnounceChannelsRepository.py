@@ -35,7 +35,11 @@ class TwitchAnnounceChannel():
 
 class TwitchAnnounceChannelsRepository():
 
-    def __init__(self, backingDatabase: BackingDatabase, usersRepository: UsersRepository):
+    def __init__(
+        self,
+        backingDatabase: BackingDatabase,
+        usersRepository: UsersRepository
+    ):
         if backingDatabase is None:
             raise ValueError(f'backingDatabase argument is malformed: \"{backingDatabase}\"')
         elif usersRepository is None:

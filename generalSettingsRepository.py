@@ -9,7 +9,7 @@ import CynanBotCommon.utils as utils
 from generalSettingsSnapshot import GeneralSettingsSnapshot
 
 
-class GeneralSettingsHelper():
+class GeneralSettingsRepository():
 
     def __init__(
         self,
@@ -45,9 +45,6 @@ class GeneralSettingsHelper():
         return snapshot
 
     def __readJson(self) -> Dict[str, Any]:
-        if self.__jsonCache is not None:
-            return self.__jsonCache
-
         if not os.path.exists(self.__generalSettingsFile):
             raise FileNotFoundError(f'generalSettingsFile not found: \"{self.__generalSettingsFile}\"')
 
@@ -59,12 +56,11 @@ class GeneralSettingsHelper():
         elif len(jsonContents) == 0:
             raise ValueError(f'JSON contents of general settings file \"{self.__generalSettingsFile}\" is empty')
 
-        self.__jsonCache = jsonContents
         return jsonContents
 
     async def __readJsonAsync(self) -> Dict[str, Any]:
-        if self.__jsonCache is not None:
-            return self.__jsonCache
+        if not await aiofiles.ospath.exists(self.__generalSettingsFile):
+            raise FileNotFoundError(f'General Settings file not found: \"{self.__generalSettingsFile}\"')
 
         async with aiofiles.open(self.__generalSettingsFile, mode = 'r') as file:
             data = await file.read()
@@ -75,10 +71,4 @@ class GeneralSettingsHelper():
         elif len(jsonContents) == 0:
             raise ValueError(f'JSON contents of general settings file \"{self.__generalSettingsFile}\" is empty')
 
-        if jsonContents is None:
-            raise IOError(f'Error reading from general settings file: \"{self.__generalSettingsFile}\"')
-        elif len(jsonContents) == 0:
-            raise ValueError(f'JSON contents of general settings file \"{self.__generalSettingsFile}\" is empty')
-
-        self.__jsonCache = jsonContents
         return jsonContents

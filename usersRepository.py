@@ -1,6 +1,8 @@
-from typing import List
+from datetime import datetime
+from typing import List, Optional
 
 import CynanBotCommon.utils as utils
+from CynanBotCommon.simpleDateTime import SimpleDateTime
 from CynanBotCommon.storage.backingDatabase import BackingDatabase
 from CynanBotCommon.storage.databaseConnection import DatabaseConnection
 from CynanBotCommon.users.usersRepositoryInterface import \
@@ -31,7 +33,7 @@ class UsersRepository(UsersRepositoryInterface):
                     VALUES ($1, $2, $3, $4, $5)
                     ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, mostRecentStreamDateTime = excluded.mostRecentStreamDateTime, twitchName = excluded.twitchName
                 ''',
-                user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTimeStr(), user.getTwitchName()
+                user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTime().getIsoFormatStr(), user.getTwitchName()
             )
         elif user.hasMostRecentStreamDateTime():
             await connection.execute(
@@ -40,7 +42,7 @@ class UsersRepository(UsersRepositoryInterface):
                     VALUES ($1, $2, $3, $4)
                     ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, mostRecentStreamDateTime = excluded.mostRecentStreamDateTime
                 ''',
-                user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTimeStr()
+                user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTime().getIsoFormatStr()
             )
         elif user.hasTwitchName():
             await connection.execute(
@@ -87,11 +89,18 @@ class UsersRepository(UsersRepositoryInterface):
             await connection.close()
             raise ValueError(f'Unable to find user with discordId: \"{discordId}\"')
 
+        mostRecentStreamDateTime: Optional[datetime] = utils.getDateTimeFromStr(row[3])
+        mostRecentStreamSimpleDateTime: Optional[SimpleDateTime] = None
+        if mostRecentStreamDateTime is not None:
+            mostRecentStreamSimpleDateTime = SimpleDateTime(
+                now = mostRecentStreamDateTime
+            )
+
         user = User(
             discordDiscriminator = row[0],
             discordId = row[1],
             discordName = row[2],
-            mostRecentStreamDateTime = utils.getDateTimeFromStr(row[3]),
+            mostRecentStreamDateTime = mostRecentStreamSimpleDateTime,
             twitchName = row[4]
         )
 

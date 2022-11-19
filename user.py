@@ -1,7 +1,7 @@
-from datetime import datetime
 from typing import Optional
 
 import CynanBotCommon.utils as utils
+from CynanBotCommon.simpleDateTime import SimpleDateTime
 from CynanBotCommon.users.userInterface import UserInterface
 
 
@@ -12,7 +12,7 @@ class User(UserInterface):
         discordDiscriminator: str,
         discordId: str,
         discordName: str,
-        mostRecentStreamDateTime: Optional[datetime] = None,
+        mostRecentStreamDateTime: Optional[SimpleDateTime] = None,
         twitchName: Optional[str] = None
     ):
         if not utils.isValidStr(discordDiscriminator):
@@ -25,7 +25,7 @@ class User(UserInterface):
         self.__discordDiscriminator: str = discordDiscriminator
         self.__discordId: str = discordId
         self.__discordName: str = discordName
-        self.__mostRecentStreamDateTime: Optional[datetime] = mostRecentStreamDateTime
+        self.__mostRecentStreamDateTime: Optional[SimpleDateTime] = mostRecentStreamDateTime
         self.__twitchName: Optional[str] = twitchName
 
     def getDiscordDiscriminator(self) -> str:
@@ -43,11 +43,8 @@ class User(UserInterface):
     def getHandle(self) -> str:
         return self.getDiscordName()
 
-    def getMostRecentStreamDateTime(self) -> datetime:
+    def getMostRecentStreamDateTime(self) -> Optional[SimpleDateTime]:
         return self.__mostRecentStreamDateTime
-
-    def getMostRecentStreamDateTimeStr(self) -> str:
-        return utils.getStrFromDateTime(self.__mostRecentStreamDateTime)
 
     def getTwitchName(self) -> str:
         return self.__twitchName
@@ -56,7 +53,7 @@ class User(UserInterface):
         return self.__mostRecentStreamDateTime is not None
 
     def hasTwitchName(self) -> bool:
-        return self.__twitchName
+        return utils.isValidStr(self.__twitchName)
 
-    def setMostRecentStreamDateTime(self, mostRecentStreamDateTime: datetime):
+    def setMostRecentStreamDateTime(self, mostRecentStreamDateTime: Optional[SimpleDateTime]):
         self.__mostRecentStreamDateTime = mostRecentStreamDateTime

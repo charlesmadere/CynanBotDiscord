@@ -5,7 +5,7 @@ from typing import Dict
 import CynanBotCommon.utils as utils
 
 
-class AuthHelper():
+class AuthRepository():
 
     def __init__(
         self,

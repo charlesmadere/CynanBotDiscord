@@ -1,6 +1,6 @@
 import asyncio
 import urllib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List
 
 import discord
@@ -8,11 +8,11 @@ from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 
 import CynanBotCommon.utils as utils
-from authHelper import AuthHelper
+from authRepository import AuthRepository
 from CynanBotCommon.timber.timber import Timber
-from generalSettingsHelper import GeneralSettingsHelper
+from generalSettingsRepository import GeneralSettingsRepository
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
-from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
+from twitchAnnounceSettingsRepository import TwitchAnnounceSettingsRepository
 from twitchLiveUsersRepository import TwitchLiveUsersRepository
 from user import User
 
@@ -21,11 +21,11 @@ class CynanBotDiscord(commands.Bot):
 
     def __init__(
         self,
-        authHelper: AuthHelper,
-        generalSettingsHelper: GeneralSettingsHelper,
+        authRepository: AuthRepository,
+        generalSettingsRepository: GeneralSettingsRepository,
         timber: Timber,
         twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository,
-        twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper,
+        twitchAnnounceSettingsRepository: TwitchAnnounceSettingsRepository,
         twitchLiveUsersRepository: TwitchLiveUsersRepository
     ):
         super().__init__(
@@ -34,28 +34,28 @@ class CynanBotDiscord(commands.Bot):
             status = discord.Status.online
         )
 
-        if authHelper is None:
-            raise ValueError(f'authHelper argument is malformed: \"{authHelper}\"')
-        elif generalSettingsHelper is None:
-            raise ValueError(f'generalSettingsHelper argument is malformed: \"{generalSettingsHelper}\"')
+        if authRepository is None:
+            raise ValueError(f'authRepository argument is malformed: \"{authRepository}\"')
+        elif generalSettingsRepository is None:
+            raise ValueError(f'generalSettingsRepository argument is malformed: \"{generalSettingsRepository}\"')
         elif timber is None:
             raise ValueError(f'timber argument is malformed: \"{timber}\"')
         elif twitchAnnounceChannelsRepository is None:
             raise ValueError(f'twitchAnnounceChannelsRepository argument is malformed: \"{twitchAnnounceChannelsRepository}\"')
-        elif twitchAnnounceSettingsHelper is None:
-            raise ValueError(f'twitchAnnounceSttingsHelper argument is malformed: \"{twitchAnnounceSettingsHelper}\"')
+        elif twitchAnnounceSettingsRepository is None:
+            raise ValueError(f'twitchAnnounceSettingsRepository argument is malformed: \"{twitchAnnounceSettingsRepository}\"')
         elif twitchLiveUsersRepository is None:
             raise ValueError(f'twitchLiveUsersRepository argument is malformed: \"{twitchLiveUsersRepository}\"')
 
-        self.__authHelper: AuthHelper = authHelper
-        self.__generalSettingsHelper: GeneralSettingsHelper = generalSettingsHelper
+        self.__authRepository: AuthRepository = authRepository
+        self.__generalSettingsRepository: GeneralSettingsRepository = generalSettingsRepository
         self.__timber: Timber = timber
         self.__twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository
-        self.__twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
+        self.__twitchAnnounceSettingsRepository: TwitchAnnounceSettingsRepository = twitchAnnounceSettingsRepository
         self.__twitchLiveUsersRepository: TwitchLiveUsersRepository = twitchLiveUsersRepository
 
-        now = datetime.utcnow()
-        self.__lastTwitchCheckTime = now - timedelta(minutes = self.__twitchAnnounceSettingsHelper.getRefreshEveryMinutes())
+        now = datetime.now(timezone.utc)
+        self.__lastTwitchCheckTime = now - timedelta(minutes = self.__twitchAnnounceSettingsRepository.getAll().getRefreshEveryMinutes())
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, CommandNotFound):
@@ -121,18 +121,18 @@ class CynanBotDiscord(commands.Bot):
         while not self.is_closed():
             await self.__checkTwitchStreams()
 
-            generalSettings = await self.__generalSettingsHelper.getAllAsync()
+            generalSettings = await self.__generalSettingsRepository.getAllAsync()
             await asyncio.sleep(generalSettings.getRefreshEverySeconds())
 
     async def __checkTwitchStreams(self):
-        now = datetime.utcnow()
-
-        if self.__lastTwitchCheckTime + timedelta(minutes = self.__twitchAnnounceSettingsHelper.getRefreshEveryMinutes()) >= now:
+        now = datetime.now(timezone.utc)
+        twitchAnnounceSettings = await self.__twitchAnnounceSettingsRepository.getAllAsync()
+        if self.__lastTwitchCheckTime + timedelta(minutes = twitchAnnounceSettings.getRefreshEveryMinutes()) >= now:
             return
 
         self.__lastTwitchCheckTime = now
 
-        twitchLiveUserData = self.__twitchLiveUsersRepository.fetchTwitchLiveUserData()
+        twitchLiveUserData = await self.__twitchLiveUsersRepository.fetchTwitchLiveUserData()
         if not utils.hasItems(twitchLiveUserData):
             return
 
@@ -154,7 +154,7 @@ class CynanBotDiscord(commands.Bot):
             discordAnnounceText = f'{firstLineText}{secondLineText}{thirdLineText}'
 
             user = twitchLiveUserData.getUser()
-            announceChannelNames = list()
+            announceChannelNames: List[str] = list()
 
             for discordChannelId in twitchLiveUserData.getDiscordChannelIds():
                 channel = await self.__fetchChannel(discordChannelId)
@@ -262,7 +262,7 @@ class CynanBotDiscord(commands.Bot):
             await ctx.send('please mention the user(s) you want to remove')
             return
 
-        userNames = list()
+        userNames: List[str] = list()
         for mention in mentions:
             user = User(
                 discordDiscriminator = mention.discriminator,

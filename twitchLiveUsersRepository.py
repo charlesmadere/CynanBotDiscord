@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Set
 
 import CynanBotCommon.utils as utils
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
-from twitchAnnounceSettingsHelper import TwitchAnnounceSettingsHelper
+from twitchAnnounceSettingsRepository import TwitchAnnounceSettingsRepository
 from twitchLiveHelper import TwitchLiveData, TwitchLiveHelper
 from user import User
 from usersRepository import UsersRepository
@@ -43,30 +43,30 @@ class TwitchLiveUsersRepository():
     def __init__(
         self,
         twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository,
-        twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper,
+        twitchAnnounceSettingsRepository: TwitchAnnounceSettingsRepository,
         twitchLiveHelper: TwitchLiveHelper,
         usersRepository: UsersRepository
     ):
         if twitchAnnounceChannelsRepository is None:
             raise ValueError(f'twitchAnnounceChannelsRepository argument is malformed: \"{twitchAnnounceChannelsRepository}\"')
-        elif twitchAnnounceSettingsHelper is None:
-            raise ValueError(f'twitchAnnounceSettingsHelper argument is malformed: \"{twitchAnnounceSettingsHelper}\"')
+        elif twitchAnnounceSettingsRepository is None:
+            raise ValueError(f'twitchAnnounceSettingsRepository argument is malformed: \"{twitchAnnounceSettingsRepository}\"')
         elif twitchLiveHelper is None:
             raise ValueError(f'twitchLiveHelper argument is malformed: \"{twitchLiveHelper}\"')
         elif usersRepository is None:
             raise ValueError(f'usersRepository argument is malformed: \"{usersRepository}\"')
 
         self.__twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository
-        self.__twitchAnnounceSettingsHelper: TwitchAnnounceSettingsHelper = twitchAnnounceSettingsHelper
+        self.__twitchAnnounceSettingsRepository: TwitchAnnounceSettingsRepository = twitchAnnounceSettingsRepository
         self.__twitchLiveHelper: TwitchLiveHelper = twitchLiveHelper
         self.__usersRepository: UsersRepository = usersRepository
 
-    async def fetchTwitchLiveUserData(self) -> List[TwitchLiveUserData]:
+    async def fetchTwitchLiveUserData(self) -> Optional[List[TwitchLiveUserData]]:
         twitchAnnounceChannels = await self.__twitchAnnounceChannelsRepository.fetchTwitchAnnounceChannels()
         if not utils.hasItems(twitchAnnounceChannels):
             return None
 
-        now = datetime.utcnow()        
+        now = datetime.now(timezone.utc)
         userIdsToChannels: Dict[str, Set[int]] = dict()
         userIdsToUsers: Dict[str, User] = dict()
 
@@ -97,7 +97,8 @@ class TwitchLiveUsersRepository():
         if not utils.hasItems(whoIsLive):
             return None
 
-        announceTimeDelta = timedelta(minutes = self.__twitchAnnounceSettingsHelper.getAnnounceFalloffMinutes())
+        twitchAnnounceSettings = await self.__twitchAnnounceSettingsRepository.getAllAsync()
+        announceTimeDelta = timedelta(minutes = twitchAnnounceSettings.getAnnounceFalloffMinutes())
         removeTheseUsers: List[User] = list()
 
         for user in whoIsLive:
