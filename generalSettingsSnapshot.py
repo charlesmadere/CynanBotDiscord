@@ -20,7 +20,7 @@ class GeneralSettingsSnapshot():
         self.__generalSettingsFile: str = generalSettingsFile
 
     def getRefreshEverySeconds(self) -> int:
-        return utils.getIntFromDict(self.__jsonContents, 'refreshEverySeconds')
+        return utils.getIntFromDict(self.__jsonContents, 'refreshEverySeconds', 120)
 
     def requireDatabaseType(self) -> DatabaseType:
         databaseType = self.__jsonContents.get('databaseType')
