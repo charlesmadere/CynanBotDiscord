@@ -1,8 +1,12 @@
 import json
 import os
-from typing import Dict
+from typing import Any, Dict, Optional
+
+import aiofiles
+import aiofiles.ospath
 
 import CynanBotCommon.utils as utils
+from authSnapshot import AuthSnapshot
 
 
 class AuthRepository():
@@ -15,40 +19,52 @@ class AuthRepository():
             raise ValueError(f'argument is malformed: \"{authFile}\"')
 
         self.__authFile: str = authFile
+        self.__cache: Optional[AuthSnapshot] = None
 
-    def requireDiscordToken(self) -> str:
+    async def clearCaches(self):
+        self.__cache = None
+
+    def getAll(self) -> AuthSnapshot:
+        if self.__cache is not None:
+            return self.__cache
+
         jsonContents = self.__readJson()
+        snapshot = AuthSnapshot(jsonContents, self.__authFile)
+        self.__cache = snapshot
 
-        discordToken = jsonContents.get('discordToken')
-        if not utils.isValidStr(discordToken):
-            raise ValueError(f'\"discordToken\" in auth file \"{self.__authFile}\" is malformed: \"{discordToken}\"')
+        return snapshot
 
-        return discordToken
+    async def getAllAsync(self) -> AuthSnapshot:
+        if self.__cache is not None:
+            return self.__cache
 
-    def requireTwitchClientId(self) -> str:
-        jsonContents = self.__readJson()
+        jsonContents = await self.__readJsonAsync()
+        snapshot = AuthSnapshot(jsonContents, self.__authFile)
+        self.__cache = snapshot
 
-        twitchClientId = jsonContents.get('twitchClientId')
-        if not utils.isValidStr(twitchClientId):
-            raise ValueError(f'\"twitchClientId\" in auth file \"{self.__authFile}\" is malformed: \"{twitchClientId}\"')
+        return snapshot
 
-        return twitchClientId
-
-    def requireTwitchClientSecret(self) -> str:
-        jsonContents = self.__readJson()
-
-        twitchClientSecret = jsonContents.get('twitchClientSecret')
-        if not utils.isValidStr(twitchClientSecret):
-            raise ValueError(f'\"twitchClientSecret\" in auth file \"{self.__authFile}\" is malformed: \"{twitchClientSecret}\"')
-
-        return twitchClientSecret
-
-    def __readJson(self) -> Dict[str, object]:
+    def __readJson(self) -> Dict[str, Any]:
         if not os.path.exists(self.__authFile):
             raise FileNotFoundError(f'Auth file not found: \"{self.__authFile}\"')
 
         with open(self.__authFile, 'r') as file:
             jsonContents = json.load(file)
+
+        if jsonContents is None:
+            raise IOError(f'Error reading from auth file: \"{self.__authFile}\"')
+        elif len(jsonContents) == 0:
+            raise ValueError(f'JSON contents of auth file \"{self.__authFile}\" is empty')
+
+        return jsonContents
+
+    async def __readJsonAsync(self) -> Dict[str, Any]:
+        if not await aiofiles.ospath.exists(self.__authFile):
+            raise FileNotFoundError(f'Auth file not found: \"{self.__authFile}\"')
+
+        async with aiofiles.open(self.__authFile, mode = 'r') as file:
+            data = await file.read()
+            jsonContents = json.loads(data)
 
         if jsonContents is None:
             raise IOError(f'Error reading from auth file: \"{self.__authFile}\"')

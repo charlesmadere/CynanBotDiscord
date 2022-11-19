@@ -22,7 +22,7 @@ eventLoop = asyncio.get_event_loop()
 timber = Timber(
     eventLoop = eventLoop
 )
-authHelper = AuthRepository()
+authRepository = AuthRepository()
 generalSettingsRepository = GeneralSettingsRepository()
 
 backingDatabase: BackingDatabase = None
@@ -51,7 +51,7 @@ networkClientProvider = NetworkClientProvider(
 )
 
 cynanBotDiscord = CynanBotDiscord(
-    authRepository = authHelper,
+    authRepository = authRepository,
     generalSettingsRepository = generalSettingsRepository,
     timber = timber,
     twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository,
@@ -60,9 +60,8 @@ cynanBotDiscord = CynanBotDiscord(
         twitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository,
         twitchAnnounceSettingsRepository = twitchAnnounceSettingsRepository,
         twitchLiveHelper = TwitchLiveHelper(
+            authRepository = authRepository,
             networkClientProvider = networkClientProvider,
-            twitchClientId = authHelper.requireTwitchClientId(),
-            twitchClientSecret = authHelper.requireTwitchClientSecret(),
             timber = timber,
             twitchTokensRepository = TwitchTokensRepository(
                 networkClientProvider = networkClientProvider,
@@ -99,6 +98,5 @@ async def removeTwitchUser(ctx, *args):
 # end CynanBotDiscord commands                                                                    #
 ###################################################################################################
 
-
 timber.log('initCynanBotDiscord', 'Starting CynanBotDiscord...')
-cynanBotDiscord.run(authHelper.requireDiscordToken())
+cynanBotDiscord.run(authRepository.getAll().requireDiscordToken())

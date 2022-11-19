@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 
 import CynanBotCommon.utils as utils
+from authRepository import AuthRepository
 from CynanBotCommon.networkClientProvider import NetworkClientProvider
 from CynanBotCommon.timber.timber import Timber
 from CynanBotCommon.twitch.twitchTokensRepository import TwitchTokensRepository
@@ -116,19 +117,16 @@ class TwitchLiveHelper():
 
     def __init__(
         self,
+        authRepository: AuthRepository,
         networkClientProvider: NetworkClientProvider,
-        twitchClientId: str,
-        twitchClientSecret: str,
         timber: Timber,
         twitchTokensRepository: TwitchTokensRepository,
         twitchHandle: str = 'CynanBot'
     ):
-        if networkClientProvider is None:
+        if authRepository is None:
+            raise ValueError(f'authRepository argument is malformed: \"{authRepository}\"')
+        elif networkClientProvider is None:
             raise ValueError(f'networkClientProvider argument is malformed: \"{networkClientProvider}\"')
-        elif not utils.isValidStr(twitchClientId):
-            raise ValueError(f'twitchClientId argument is malformed: \"{twitchClientId}\"')
-        elif not utils.isValidStr(twitchClientSecret):
-            raise ValueError(f'twitchClientSecret argument is malformed: \"{twitchClientSecret}\"')
         elif timber is None:
             raise ValueError(f'timber argument is malformed: \"{timber}\"')
         elif twitchTokensRepository is None:
@@ -136,9 +134,8 @@ class TwitchLiveHelper():
         elif not utils.isValidStr(twitchHandle):
             raise ValueError(f'twitchHandle argument is malformed: \"{twitchHandle}\"')
 
+        self.__authRepository: AuthRepository = authRepository
         self.__networkClientProvider: NetworkClientProvider = networkClientProvider
-        self.__twitchClientId: str = twitchClientId
-        self.__twitchClientSecret: str = twitchClientSecret
         self.__timber: Timber = timber
         self.__twitchTokensRepository: TwitchTokensRepository = twitchTokensRepository
         self.__twitchHandle: str = twitchHandle
@@ -162,8 +159,11 @@ class TwitchLiveHelper():
             userNamesList.append(user.getTwitchName())
         userNamesStr: str = '&user_login='.join(userNamesList)
 
-        twitchAccessToken = await self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)
         clientSession = await self.__networkClientProvider.get()
+        twitchAccessToken = await self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)
+        authSnapshot = await self.__authRepository.getAllAsync()
+        twitchClientId = authSnapshot.requireTwitchClientId()
+        twitchClientSecret = authSnapshot.requireTwitchClientSecret()
 
         rawResponse = None
         try:
@@ -171,14 +171,14 @@ class TwitchLiveHelper():
                 url = f'https://api.twitch.tv/helix/streams?user_login={userNamesStr}',
                 headers = {
                     'Authorization': f'Bearer {twitchAccessToken}',
-                    'Client-Id': self.__twitchClientId
+                    'Client-Id': twitchClientId
                 }
             )
         except (aiohttp.ClientError, TimeoutError) as e:
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
 
-        jsonResponse: Optional[Dict[str, object]] = None
+        jsonResponse: Optional[Dict[str, Any]] = None
         try:
             jsonResponse = await rawResponse.json()
         except JSONDecodeError as e:
@@ -192,8 +192,8 @@ class TwitchLiveHelper():
                 raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop!')
             elif 'status' in jsonResponse and utils.getIntFromDict(jsonResponse, 'status') == 401:
                 await self.__twitchTokensRepository.validateAndRefreshAccessToken(
-                    twitchClientId = self.__twitchClientId,
-                    twitchClientSecret = self.__twitchClientSecret,
+                    twitchClientId = twitchClientId,
+                    twitchClientSecret = twitchClientSecret,
                     twitchHandle = self.__twitchHandle
                 )
 
