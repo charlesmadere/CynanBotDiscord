@@ -1,3 +1,4 @@
 {
+    "databaseType": "sqlite",
     "refreshEverySeconds": 120
 }
