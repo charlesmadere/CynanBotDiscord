@@ -147,7 +147,7 @@ class TwitchAnnounceChannelsRepository():
         twitchAnnounceChannels: List[TwitchAnnounceChannel] = list()
 
         for row in rows:
-            twitchAnnounceChannel = self.fetchTwitchAnnounceChannel(int(row[0]))
+            twitchAnnounceChannel = await self.fetchTwitchAnnounceChannel(int(row[0]))
             twitchAnnounceChannels.append(twitchAnnounceChannel)
 
         await connection.close()
