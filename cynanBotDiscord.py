@@ -131,6 +131,7 @@ class CynanBotDiscord(commands.Bot):
             return
 
         self.__lastTwitchCheckTime = now
+        self.__timber.log('CynanBotDiscord', 'Checking for live Twitch streams...')
 
         twitchLiveUserData = await self.__twitchLiveUsersRepository.fetchTwitchLiveUserData()
         if not utils.hasItems(twitchLiveUserData):
