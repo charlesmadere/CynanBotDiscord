@@ -179,10 +179,6 @@ class TwitchLiveHelper():
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
 
-        if response.status_code != 200:
-            self.__timber.log('TwitchLiveHelper', f'Encountered non HTTP 200 status code when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {response.status_code}')
-            raise RuntimeError(f'Encountered non HTTP 200 status code when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {response.status_code}')
-
         jsonResponse: Optional[Dict[str, Any]] = None
         try:
             jsonResponse = response.json()
@@ -190,8 +186,8 @@ class TwitchLiveHelper():
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
 
-        if 'error' in jsonResponse and len(jsonResponse['error']) >= 1 or 'data' not in jsonResponse:
-            self.__timber.log('TwitchLiveHelper', f'Error when checking Twitch live status for {len(users)} user(s)! {jsonResponse}')
+        if response is None or response.status_code != 200 or jsonResponse is None or ('error' in jsonResponse and len(jsonResponse['error']) >= 1) or 'data' not in jsonResponse:
+            self.__timber.log('TwitchLiveHelper', f'Error when checking Twitch live status for {len(users)} user(s)! {response} {jsonResponse}')
 
             if isRetry:
                 raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop!')
