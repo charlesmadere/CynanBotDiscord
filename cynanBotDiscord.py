@@ -119,7 +119,10 @@ class CynanBotDiscord(commands.Bot):
         await self.wait_until_ready()
 
         while not self.is_closed():
-            await self.__checkTwitchStreams()
+            try:
+                await self.__checkTwitchStreams()
+            except Exception as e:
+                self.__timber.log('CynanBotDiscord', f'Encountered Exception when checking Twitch streams: {e}', e)
 
             generalSettings = await self.__generalSettingsRepository.getAllAsync()
             await asyncio.sleep(generalSettings.getRefreshEverySeconds())
