@@ -71,7 +71,7 @@ class CynanBotDiscord(commands.Bot):
 
     async def on_ready(self):
         self.__timber.log('CynanBotDiscord', f'{self.user} is ready!')
-        self.__eventLoop.create_task(self.__beginLooping())
+        self.loop.create_task(self.__beginLooping())
 
     async def addTwitchUser(self, ctx):
         if ctx is None:
