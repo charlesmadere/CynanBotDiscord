@@ -138,7 +138,7 @@ class TwitchAnnounceChannelsRepository():
 
     async def fetchTwitchAnnounceChannels(self) -> Optional[List[TwitchAnnounceChannel]]:
         connection = await self.__getDatabaseConnection()
-        rows = await connection.fetchRow('SELECT discordChannelId FROM twitchAnnounceChannels')
+        rows = await connection.fetchRows('SELECT discordChannelId FROM twitchAnnounceChannels')
 
         if not utils.hasItems(rows):
             await connection.close()
