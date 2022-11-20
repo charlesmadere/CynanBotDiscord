@@ -3,6 +3,7 @@ from json.decoder import JSONDecodeError
 from typing import Any, Dict, List, Optional
 
 import aiohttp
+import requests
 
 import CynanBotCommon.utils as utils
 from authRepository import AuthRepository
@@ -167,7 +168,7 @@ class TwitchLiveHelper():
 
         rawResponse = None
         try:
-            rawResponse = await clientSession.get(
+            rawResponse = requests.get(
                 url = f'https://api.twitch.tv/helix/streams?type=live&first=100&user_login={userNamesStr}',
                 headers = {
                     'Authorization': f'Bearer {twitchAccessToken}',
