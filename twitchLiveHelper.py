@@ -185,7 +185,7 @@ class TwitchLiveHelper():
 
         jsonResponse: Optional[Dict[str, Any]] = None
         try:
-            jsonResponse = await rawResponse.json()
+            jsonResponse = rawResponse.json()
         except JSONDecodeError as e:
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
