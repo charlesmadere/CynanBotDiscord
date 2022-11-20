@@ -1,5 +1,6 @@
 import asyncio
 import urllib
+from asyncio import AbstractEventLoop
 from datetime import datetime, timedelta, timezone
 from typing import List
 
@@ -21,6 +22,7 @@ class CynanBotDiscord(commands.Bot):
 
     def __init__(
         self,
+        eventLoop: AbstractEventLoop,
         authRepository: AuthRepository,
         generalSettingsRepository: GeneralSettingsRepository,
         timber: Timber,
@@ -29,12 +31,15 @@ class CynanBotDiscord(commands.Bot):
         twitchLiveUsersRepository: TwitchLiveUsersRepository
     ):
         super().__init__(
+            loop = eventLoop,
             command_prefix = '!',
             intents = discord.Intents.default(),
             status = discord.Status.online
         )
 
-        if authRepository is None:
+        if eventLoop is None:
+            raise ValueError(f'eventLoop argument is malformed: \"{eventLoop}\"')
+        elif authRepository is None:
             raise ValueError(f'authRepository argument is malformed: \"{authRepository}\"')
         elif generalSettingsRepository is None:
             raise ValueError(f'generalSettingsRepository argument is malformed: \"{generalSettingsRepository}\"')
@@ -47,6 +52,7 @@ class CynanBotDiscord(commands.Bot):
         elif twitchLiveUsersRepository is None:
             raise ValueError(f'twitchLiveUsersRepository argument is malformed: \"{twitchLiveUsersRepository}\"')
 
+        self.__eventLoop: AbstractEventLoop = eventLoop
         self.__authRepository: AuthRepository = authRepository
         self.__generalSettingsRepository: GeneralSettingsRepository = generalSettingsRepository
         self.__timber: Timber = timber
@@ -65,7 +71,7 @@ class CynanBotDiscord(commands.Bot):
 
     async def on_ready(self):
         self.__timber.log('CynanBotDiscord', f'{self.user} is ready!')
-        self.loop.create_task(self.__beginLooping())
+        self.__eventLoop.create_task(self.__beginLooping())
 
     async def addTwitchUser(self, ctx):
         if ctx is None:

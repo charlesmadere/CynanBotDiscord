@@ -51,6 +51,7 @@ networkClientProvider = NetworkClientProvider(
 )
 
 cynanBotDiscord = CynanBotDiscord(
+    eventLoop = eventLoop,
     authRepository = authRepository,
     generalSettingsRepository = generalSettingsRepository,
     timber = timber,
