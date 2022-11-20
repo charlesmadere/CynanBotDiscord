@@ -30,12 +30,12 @@ authRepository = AuthRepository()
 generalSettingsRepository = GeneralSettingsRepository()
 
 backingDatabase: BackingDatabase = None
-if generalSettingsRepository.getAll().requireDatabaseType() == DatabaseType.POSTGRESQL:
+if generalSettingsRepository.getAll().requireDatabaseType() is DatabaseType.POSTGRESQL:
     backingDatabase = BackingPsqlDatabase(
         eventLoop = eventLoop,
         psqlCredentialsProvider = PsqlCredentialsProvider()
     )
-elif generalSettingsRepository.getAll().requireDatabaseType() == DatabaseType.SQLITE:
+elif generalSettingsRepository.getAll().requireDatabaseType() is DatabaseType.SQLITE:
     backingDatabase = BackingSqliteDatabase(
         eventLoop = eventLoop
     )
