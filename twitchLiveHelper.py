@@ -166,9 +166,9 @@ class TwitchLiveHelper():
         twitchClientId = authSnapshot.requireTwitchClientId()
         twitchClientSecret = authSnapshot.requireTwitchClientSecret()
 
-        rawResponse = None
+        response = None
         try:
-            rawResponse = requests.get(
+            response = requests.get(
                 url = f'https://api.twitch.tv/helix/streams?type=live&first=100&user_login={userNamesStr}',
                 headers = {
                     'Authorization': f'Bearer {twitchAccessToken}',
@@ -179,13 +179,13 @@ class TwitchLiveHelper():
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
 
-        if rawResponse.status_code != 200:
-            self.__timber.log('TwitchLiveHelper', f'Encountered non HTTP 200 status code when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {rawResponse.status}')
-            raise RuntimeError(f'Encountered non HTTP 200 status code when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {rawResponse.status}')
+        if response.status_code != 200:
+            self.__timber.log('TwitchLiveHelper', f'Encountered non HTTP 200 status code when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {response.status_code}')
+            raise RuntimeError(f'Encountered non HTTP 200 status code when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {response.status_code}')
 
         jsonResponse: Optional[Dict[str, Any]] = None
         try:
-            jsonResponse = rawResponse.json()
+            jsonResponse = response.json()
         except JSONDecodeError as e:
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
