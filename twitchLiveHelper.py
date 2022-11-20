@@ -168,7 +168,7 @@ class TwitchLiveHelper():
         rawResponse = None
         try:
             rawResponse = await clientSession.get(
-                url = f'https://api.twitch.tv/helix/streams?user_login={userNamesStr}',
+                url = f'https://api.twitch.tv/helix/streams?type=live&first=100&user_login={userNamesStr}',
                 headers = {
                     'Authorization': f'Bearer {twitchAccessToken}',
                     'Client-Id': twitchClientId
