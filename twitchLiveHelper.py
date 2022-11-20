@@ -179,7 +179,7 @@ class TwitchLiveHelper():
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
 
-        if rawResponse.status != 200:
+        if rawResponse.status_code != 200:
             self.__timber.log('TwitchLiveHelper', f'Encountered non HTTP 200 status code when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {rawResponse.status}')
             raise RuntimeError(f'Encountered non HTTP 200 status code when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {rawResponse.status}')
 
