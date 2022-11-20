@@ -31,7 +31,7 @@ class UsersRepository(UsersRepositoryInterface):
                 '''
                     INSERT INTO users (discordDiscriminator, discordId, discordName, mostRecentStreamDateTime, twitchName)
                     VALUES ($1, $2, $3, $4, $5)
-                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, mostRecentStreamDateTime = excluded.mostRecentStreamDateTime, twitchName = excluded.twitchName
+                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = EXCLUDED.discordDiscriminator, discordName = EXCLUDED.discordName, mostRecentStreamDateTime = EXCLUDED.mostRecentStreamDateTime, twitchName = EXCLUDED.twitchName
                 ''',
                 user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTime().getIsoFormatStr(), user.getTwitchName()
             )
@@ -40,7 +40,7 @@ class UsersRepository(UsersRepositoryInterface):
                 '''
                     INSERT INTO users (discordDiscriminator, discordId, discordName, mostRecentStreamDateTime)
                     VALUES ($1, $2, $3, $4)
-                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, mostRecentStreamDateTime = excluded.mostRecentStreamDateTime
+                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = EXCLUDED.discordDiscriminator, discordName = EXCLUDED.discordName, mostRecentStreamDateTime = EXCLUDED.mostRecentStreamDateTime
                 ''',
                 user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTime().getIsoFormatStr()
             )
@@ -49,7 +49,7 @@ class UsersRepository(UsersRepositoryInterface):
                 '''
                     INSERT INTO users (discordDiscriminator, discordId, discordName, twitchName)
                     VALUES ($1, $2, $3, $4)
-                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName, twitchName = excluded.twitchName
+                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = EXCLUDED.discordDiscriminator, discordName = EXCLUDED.discordName, twitchName = EXCLUDED.twitchName
                 ''',
                 user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getTwitchName()
             )
@@ -58,7 +58,7 @@ class UsersRepository(UsersRepositoryInterface):
                 '''
                     INSERT INTO users (discordDiscriminator, discordId, discordName)
                     VALUES ($1, $2, $3)
-                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = excluded.discordDiscriminator, discordName = excluded.discordName
+                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = EXCLUDED.discordDiscriminator, discordName = EXCLUDED.discordName
                 ''',
                 user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName()
             )
