@@ -1,7 +1,7 @@
 import asyncio
 
 from authRepository import AuthRepository
-from CynanBotCommon.network.aioHttpClientProvider import AioHtttpClientProvider
+from CynanBotCommon.network.aioHttpClientProvider import AioHttpClientProvider
 from CynanBotCommon.network.networkClientProvider import NetworkClientProvider
 from CynanBotCommon.network.networkClientType import NetworkClientType
 from CynanBotCommon.network.requestsClientProvider import \
@@ -44,7 +44,7 @@ else:
 
 networkClientProvider: NetworkClientProvider = None
 if generalSettingsRepository.getAll().requireNetworkClientType() is NetworkClientType.AIOHTTP:
-    networkClientProvider = AioHtttpClientProvider(
+    networkClientProvider = AioHttpClientProvider(
         eventLoop = eventLoop
     )
 elif generalSettingsRepository.getAll().requireNetworkClientType() is NetworkClientType.REQUESTS:
