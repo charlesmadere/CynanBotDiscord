@@ -46,7 +46,7 @@ class User(UserInterface):
     def getMostRecentStreamDateTime(self) -> Optional[SimpleDateTime]:
         return self.__mostRecentStreamDateTime
 
-    def getTwitchName(self) -> str:
+    def getTwitchName(self) -> Optional[str]:
         return self.__twitchName
 
     def hasMostRecentStreamDateTime(self) -> bool:
