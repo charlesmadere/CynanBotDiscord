@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 import CynanBotCommon.utils as utils
+from CynanBotCommon.network.networkClientType import NetworkClientType
 from CynanBotCommon.storage.databaseType import DatabaseType
 
 
@@ -29,3 +30,11 @@ class GeneralSettingsSnapshot():
             raise ValueError(f'\"databaseType\" in general settings file (\"{self.__generalSettingsFile}\") is malformed: \"{databaseType}\"')
 
         return DatabaseType.fromStr(databaseType)
+
+    def requireNetworkClientType(self) -> NetworkClientType:
+        networkClientType = self.__jsonContents.get('networkClientType')
+
+        if not utils.isValidStr(networkClientType):
+            raise ValueError(f'\"networkClientType\" in general settings file (\"{self.__generalSettingsFile}\") is malformed: \"{networkClientType}\"')
+
+        return NetworkClientType.fromStr(networkClientType)
