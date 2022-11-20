@@ -1,7 +1,11 @@
 import asyncio
 
 from authRepository import AuthRepository
-from CynanBotCommon.networkClientProvider import NetworkClientProvider
+from CynanBotCommon.network.aioHttpClientProvider import AioHtttpClientProvider
+from CynanBotCommon.network.networkClientProvider import NetworkClientProvider
+from CynanBotCommon.network.networkClientType import NetworkClientType
+from CynanBotCommon.network.requestsClientProvider import \
+    RequestsClientProvider
 from CynanBotCommon.storage.backingDatabase import BackingDatabase
 from CynanBotCommon.storage.backingPsqlDatabase import BackingPsqlDatabase
 from CynanBotCommon.storage.backingSqliteDatabase import BackingSqliteDatabase
@@ -38,6 +42,16 @@ elif generalSettingsRepository.getAll().requireDatabaseType() == DatabaseType.SQ
 else:
     raise RuntimeError(f'Unknown/misconfigured database type: \"{generalSettingsRepository.getAll().requireDatabaseType()}\"')
 
+networkClientProvider: NetworkClientProvider = None
+if generalSettingsRepository.getAll().requireNetworkClientType() is NetworkClientType.AIOHTTP:
+    networkClientProvider = AioHtttpClientProvider(
+        eventLoop = eventLoop
+    )
+elif generalSettingsRepository.getAll().requireNetworkClientType() is NetworkClientType.REQUESTS:
+    networkClientProvider = RequestsClientProvider()
+else:
+    raise RuntimeError(f'Unknown/misconfigured network client type: \"{generalSettingsRepository.getAll().requireNetworkClientType()}\"')
+
 usersRepository = UsersRepository(
     backingDatabase = backingDatabase
 )
@@ -46,9 +60,6 @@ twitchAnnounceChannelsRepository = TwitchAnnounceChannelsRepository(
     usersRepository = usersRepository
 )
 twitchAnnounceSettingsRepository = TwitchAnnounceSettingsRepository()
-networkClientProvider = NetworkClientProvider(
-    eventLoop = eventLoop
-)
 
 cynanBotDiscord = CynanBotDiscord(
     eventLoop = eventLoop,

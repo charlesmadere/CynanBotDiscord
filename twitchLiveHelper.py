@@ -3,11 +3,10 @@ from json.decoder import JSONDecodeError
 from typing import Any, Dict, List, Optional
 
 import aiohttp
-import requests
 
 import CynanBotCommon.utils as utils
 from authRepository import AuthRepository
-from CynanBotCommon.networkClientProvider import NetworkClientProvider
+from CynanBotCommon.network.networkClientProvider import NetworkClientProvider
 from CynanBotCommon.timber.timber import Timber
 from CynanBotCommon.twitch.twitchTokensRepository import TwitchTokensRepository
 from user import User
@@ -168,7 +167,7 @@ class TwitchLiveHelper():
 
         response = None
         try:
-            response = requests.get(
+            response = await clientSession.get(
                 url = f'https://api.twitch.tv/helix/streams?type=live&first=100&user_login={userNamesStr}',
                 headers = {
                     'Authorization': f'Bearer {twitchAccessToken}',
@@ -181,12 +180,12 @@ class TwitchLiveHelper():
 
         jsonResponse: Optional[Dict[str, Any]] = None
         try:
-            jsonResponse = response.json()
+            jsonResponse = await response.json()
         except JSONDecodeError as e:
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
 
-        if response is None or response.status_code != 200 or jsonResponse is None or ('error' in jsonResponse and len(jsonResponse['error']) >= 1) or 'data' not in jsonResponse:
+        if response is None or response.statusCode() != 200 or jsonResponse is None or ('error' in jsonResponse and len(jsonResponse['error']) >= 1) or 'data' not in jsonResponse:
             self.__timber.log('TwitchLiveHelper', f'Error when checking Twitch live status for {len(users)} user(s)! {response} {jsonResponse}')
 
             if isRetry:
