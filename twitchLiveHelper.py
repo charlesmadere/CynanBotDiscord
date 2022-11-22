@@ -184,7 +184,7 @@ class TwitchLiveHelper():
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
 
-        if response is None or response.statusCode() != 200 or jsonResponse is None or ('error' in jsonResponse and len(jsonResponse['error']) >= 1) or 'data' not in jsonResponse:
+        if response is None or response.getStatusCode() != 200 or jsonResponse is None or ('error' in jsonResponse and len(jsonResponse['error']) >= 1) or 'data' not in jsonResponse:
             self.__timber.log('TwitchLiveHelper', f'Error when checking Twitch live status for {len(users)} user(s)! {response} {jsonResponse}')
 
             if isRetry:
