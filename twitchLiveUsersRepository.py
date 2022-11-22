@@ -103,7 +103,7 @@ class TwitchLiveUsersRepository():
         removeTheseUsers: List[User] = list()
 
         for user in whoIsLive:
-            if user.hasMostRecentStreamDateTime() and (user.getMostRecentStreamDateTime() + announceTimeDelta) >= now:
+            if user.hasMostRecentStreamDateTime() and user.getMostRecentStreamDateTime() + announceTimeDelta >= now:
                 removeTheseUsers.append(user)
 
             user.setMostRecentStreamDateTime(now)
