@@ -14,7 +14,7 @@ class TwitchLiveUserData():
 
     def __init__(
         self,
-        discordChannelIds: List[int],
+        discordChannelIds: Set[int],
         twitchLiveData: TwitchLiveData,
         user: User
     ):
@@ -25,11 +25,11 @@ class TwitchLiveUserData():
         elif user is None:
             raise ValueError(f'user argument is malformed: \"{user}\"')
 
-        self.__discordChannelIds: List[int] = discordChannelIds
+        self.__discordChannelIds: Set[int] = discordChannelIds
         self.__twitchLiveData: TwitchLiveData = twitchLiveData
         self.__user: User = user
 
-    def getDiscordChannelIds(self) -> List[int]:
+    def getDiscordChannelIds(self) -> Set[int]:
         return self.__discordChannelIds
 
     def getTwitchLiveData(self) -> TwitchLiveData:
