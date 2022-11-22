@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Set
 
 import CynanBotCommon.utils as utils
+from CynanBotCommon.simpleDateTime import SimpleDateTime
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
 from twitchAnnounceSettingsRepository import TwitchAnnounceSettingsRepository
 from twitchLiveHelper import TwitchLiveData, TwitchLiveHelper
@@ -66,7 +67,7 @@ class TwitchLiveUsersRepository():
         if not utils.hasItems(twitchAnnounceChannels):
             return None
 
-        now = datetime.now(timezone.utc)
+        now = SimpleDateTime()
         userIdsToChannels: Dict[str, Set[int]] = dict()
         userIdsToUsers: Dict[str, User] = dict()
 
