@@ -45,10 +45,13 @@ else:
 networkClientProvider: NetworkClientProvider = None
 if generalSettingsRepository.getAll().requireNetworkClientType() is NetworkClientType.AIOHTTP:
     networkClientProvider = AioHttpClientProvider(
-        eventLoop = eventLoop
+        eventLoop = eventLoop,
+        timber = timber
     )
 elif generalSettingsRepository.getAll().requireNetworkClientType() is NetworkClientType.REQUESTS:
-    networkClientProvider = RequestsClientProvider()
+    networkClientProvider = RequestsClientProvider(
+        timber = timber
+    )
 else:
     raise RuntimeError(f'Unknown/misconfigured network client type: \"{generalSettingsRepository.getAll().requireNetworkClientType()}\"')
 
