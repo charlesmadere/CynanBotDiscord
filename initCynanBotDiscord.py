@@ -26,7 +26,6 @@ eventLoop = asyncio.get_event_loop()
 timber = Timber(
     eventLoop = eventLoop
 )
-authRepository = AuthRepository()
 generalSettingsRepository = GeneralSettingsRepository()
 
 backingDatabase: BackingDatabase = None
@@ -44,17 +43,18 @@ else:
 
 networkClientProvider: NetworkClientProvider = None
 if generalSettingsRepository.getAll().requireNetworkClientType() is NetworkClientType.AIOHTTP:
-    networkClientProvider = AioHttpClientProvider(
+    networkClientProvider: NetworkClientProvider = AioHttpClientProvider(
         eventLoop = eventLoop,
         timber = timber
     )
 elif generalSettingsRepository.getAll().requireNetworkClientType() is NetworkClientType.REQUESTS:
-    networkClientProvider = RequestsClientProvider(
+    networkClientProvider: NetworkClientProvider = RequestsClientProvider(
         timber = timber
     )
 else:
     raise RuntimeError(f'Unknown/misconfigured network client type: \"{generalSettingsRepository.getAll().requireNetworkClientType()}\"')
 
+authRepository = AuthRepository()
 usersRepository = UsersRepository(
     backingDatabase = backingDatabase
 )
