@@ -2,10 +2,9 @@ import locale
 from json.decoder import JSONDecodeError
 from typing import Any, Dict, List, Optional
 
-import aiohttp
-
 import CynanBotCommon.utils as utils
 from authRepository import AuthRepository
+from CynanBotCommon.network.exceptions import GenericNetworkException
 from CynanBotCommon.network.networkClientProvider import NetworkClientProvider
 from CynanBotCommon.timber.timber import Timber
 from CynanBotCommon.twitch.twitchTokensRepository import TwitchTokensRepository
@@ -174,7 +173,7 @@ class TwitchLiveHelper():
                     'Client-Id': twitchClientId
                 }
             )
-        except (aiohttp.ClientError, TimeoutError) as e:
+        except GenericNetworkException as e:
             self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
             raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
 
