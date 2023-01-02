@@ -13,6 +13,7 @@ from CynanBotCommon.storage.databaseType import DatabaseType
 from CynanBotCommon.storage.psqlCredentialsProvider import \
     PsqlCredentialsProvider
 from CynanBotCommon.timber.timber import Timber
+from CynanBotCommon.twitch.twitchApiService import TwitchApiService
 from CynanBotCommon.twitch.twitchTokensRepository import TwitchTokensRepository
 from cynanBotDiscord import CynanBotDiscord
 from generalSettingsRepository import GeneralSettingsRepository
@@ -63,6 +64,11 @@ twitchAnnounceChannelsRepository = TwitchAnnounceChannelsRepository(
     usersRepository = usersRepository
 )
 twitchAnnounceSettingsRepository = TwitchAnnounceSettingsRepository()
+twitchApiService = TwitchApiService(
+    networkClientProvider = networkClientProvider,
+    timber = timber,
+    twitchCredentialsProviderInterface = authRepository
+)
 
 cynanBotDiscord = CynanBotDiscord(
     eventLoop = eventLoop,
@@ -79,8 +85,8 @@ cynanBotDiscord = CynanBotDiscord(
             networkClientProvider = networkClientProvider,
             timber = timber,
             twitchTokensRepository = TwitchTokensRepository(
-                networkClientProvider = networkClientProvider,
-                timber = timber
+                timber = timber,
+                twitchApiService = twitchApiService
             )
         ),
         usersRepository = usersRepository
