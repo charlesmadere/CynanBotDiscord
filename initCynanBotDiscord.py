@@ -83,7 +83,6 @@ cynanBotDiscord = CynanBotDiscord(
         twitchLiveHelper = TwitchLiveHelper(
             networkClientProvider = networkClientProvider,
             timber = timber,
-            twitchCredentialsProviderInterface = authRepository,
             twitchTokensRepository = TwitchTokensRepository(
                 timber = timber,
                 twitchApiService = twitchApiService
