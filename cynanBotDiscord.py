@@ -147,7 +147,7 @@ class CynanBotDiscord(commands.Bot):
             return
 
         for twitchLiveUserData in twitchLiveUserData:
-            twitchLiveData = twitchLiveUserData.getTwitchLiveData()
+            twitchLiveData = twitchLiveUserData.getTwitchLiveDetails()
 
             firstLineText = ''
             if twitchLiveData.hasGameName():

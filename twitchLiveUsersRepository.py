@@ -1,11 +1,12 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import Dict, List, Optional, Set
 
 import CynanBotCommon.utils as utils
 from CynanBotCommon.simpleDateTime import SimpleDateTime
+from CynanBotCommon.twitch.twitchLiveUserDetails import TwitchLiveUserDetails
 from twitchAnnounceChannelsRepository import TwitchAnnounceChannelsRepository
 from twitchAnnounceSettingsRepository import TwitchAnnounceSettingsRepository
-from twitchLiveHelper import TwitchLiveData, TwitchLiveHelper
+from twitchLiveHelper import TwitchLiveHelper
 from user import User
 from usersRepository import UsersRepository
 
@@ -15,25 +16,25 @@ class TwitchLiveUserData():
     def __init__(
         self,
         discordChannelIds: Set[int],
-        twitchLiveData: TwitchLiveData,
+        twitchLiveDetails: TwitchLiveUserDetails,
         user: User
     ):
         if not utils.hasItems(discordChannelIds):
             raise ValueError(f'discordChannelIds argument is malformed: \"{discordChannelIds}\"')
-        elif twitchLiveData is None:
-            raise ValueError(f'twitchLiveData argument is malformed: \"{twitchLiveData}\"')
-        elif user is None:
+        elif not isinstance(twitchLiveDetails, TwitchLiveUserDetails):
+            raise ValueError(f'twitchLiveDetails argument is malformed: \"{twitchLiveDetails}\"')
+        elif not isinstance(user, User):
             raise ValueError(f'user argument is malformed: \"{user}\"')
 
         self.__discordChannelIds: Set[int] = discordChannelIds
-        self.__twitchLiveData: TwitchLiveData = twitchLiveData
+        self.__twitchLiveDetails: TwitchLiveUserDetails = twitchLiveDetails
         self.__user: User = user
 
     def getDiscordChannelIds(self) -> Set[int]:
         return self.__discordChannelIds
 
-    def getTwitchLiveData(self) -> TwitchLiveData:
-        return self.__twitchLiveData
+    def getTwitchLiveDetails(self) -> TwitchLiveUserDetails:
+        return self.__twitchLiveDetails
 
     def getUser(self) -> User:
         return self.__user
@@ -89,7 +90,7 @@ class TwitchLiveUsersRepository():
         for user in userIdsToUsers.values():
             users.append(user)
 
-        whoIsLive: Optional[Dict[User, TwitchLiveData]] = None
+        whoIsLive: Optional[Dict[User, TwitchLiveUserDetails]] = None
         try:
             whoIsLive = await self.__twitchLiveHelper.fetchWhoIsLive(users)
         except (RuntimeError, ValueError):
@@ -117,12 +118,12 @@ class TwitchLiveUsersRepository():
             return None
 
         twitchLiveUserDataList: List[TwitchLiveUserData] = list()
-        for user, twitchLiveData in whoIsLive.items():
+        for user, twitchLiveDetails in whoIsLive.items():
             twitchLiveUserDataList.append(TwitchLiveUserData(
                 discordChannelIds = userIdsToChannels[user.getDiscordId()],
-                twitchLiveData = twitchLiveData,
+                twitchLiveDetails = twitchLiveDetails,
                 user = user
             ))
 
-        twitchLiveUserDataList.sort(key = lambda entry: entry.getTwitchLiveData().getUserLogin().lower())
+        twitchLiveUserDataList.sort(key = lambda entry: entry.getTwitchLiveDetails().getUserLogin().lower())
         return twitchLiveUserDataList

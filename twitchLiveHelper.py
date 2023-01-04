@@ -1,152 +1,49 @@
-import locale
-from json.decoder import JSONDecodeError
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import CynanBotCommon.utils as utils
 from CynanBotCommon.network.exceptions import GenericNetworkException
-from CynanBotCommon.network.networkClientProvider import NetworkClientProvider
 from CynanBotCommon.timber.timber import Timber
-from CynanBotCommon.twitch.twitchCredentialsProviderInterface import \
-    TwitchCredentialsProviderInterface
+from CynanBotCommon.twitch.exceptions import TwitchTokenIsExpiredException
+from CynanBotCommon.twitch.twitchApiService import TwitchApiService
+from CynanBotCommon.twitch.twitchLiveUserDetails import TwitchLiveUserDetails
+from CynanBotCommon.twitch.twitchStreamType import TwitchStreamType
 from CynanBotCommon.twitch.twitchTokensRepository import TwitchTokensRepository
 from user import User
-
-
-class TwitchLiveData():
-
-    def __init__(
-        self,
-        streamId: str,
-        userId: str,
-        userLogin: str,
-        userName: str,
-        viewerCount: int = None,
-        gameId: str = None,
-        gameName: str = None,
-        language: str = None,
-        streamType: str = None,
-        thumbnailUrl: str = None,
-        title: str = None
-    ):
-        if not utils.isValidStr(streamId):
-            raise ValueError(f'streamId argument is malformed: \"{streamId}\"')
-        elif not utils.isValidStr(userId):
-            raise ValueError(f'userId argument is malformed: \"{userId}\"')
-        elif not utils.isValidStr(userLogin):
-            raise ValueError(f'userLogin argument is malformed: \"{userLogin}\"')
-        elif not utils.isValidStr(userName):
-            raise ValueError(f'userName argument is malformed: \"{userName}\"')
-
-        self.__streamId: str = streamId
-        self.__userId: str = userId
-        self.__userLogin: str = userLogin
-        self.__userName: str = userName
-        self.__viewerCount: int = viewerCount
-        self.__gameId: str = gameId
-        self.__gameName: str = gameName
-        self.__language: str = language
-        self.__streamType: str = streamType
-        self.__thumbnailUrl: str = thumbnailUrl
-        self.__title: str = title
-
-    def getGameId(self) -> str:
-        return self.__gameId
-
-    def getGameName(self) -> str:
-        return self.__gameName
-
-    def getLanguage(self) -> str:
-        return self.__language
-
-    def getStreamId(self) -> str:
-        return self.__streamId
-
-    def getStreamType(self) -> str:
-        return self.__streamType
-
-    def getThumbnailUrl(self) -> str:
-        return self.__thumbnailUrl
-
-    def getTitle(self) -> str:
-        return self.__title
-
-    def getUserId(self) -> str:
-        return self.__userId
-
-    def getUserLogin(self) -> str:
-        return self.__userLogin
-
-    def getUserName(self) -> str:
-        return self.__userName
-
-    def getViewerCount(self) -> int:
-        return self.__viewerCount
-
-    def getViewerCountStr(self) -> str:
-        if self.hasViewerCount():
-            return locale.format_string("%d", self.__viewerCount, grouping = True)
-        else:
-            raise RuntimeError(f'This TwitchLiveData ({self}) does not have a viewerCount value!')
-
-    def hasGameId(self) -> bool:
-        return utils.isValidStr(self.__gameId)
-
-    def hasGameName(self) -> bool:
-        return utils.isValidStr(self.__gameName)
-
-    def hasLanguage(self) -> bool:
-        return utils.isValidStr(self.__language)
-
-    def hasStreamType(self) -> bool:
-        return utils.isValidStr(self.__streamType)
-
-    def hasThumbnailUrl(self) -> str:
-        return utils.isValidUrl(self.__thumbnailUrl)
-
-    def hasTitle(self) -> bool:
-        return utils.isValidStr(self.__title)
-
-    def hasViewerCount(self) -> bool:
-        return utils.isValidNum(self.__viewerCount)
-
-    def isStreamTypeLive(self) -> bool:
-        return self.hasStreamType() and self.__streamType == 'live'
 
 
 class TwitchLiveHelper():
 
     def __init__(
         self,
-        networkClientProvider: NetworkClientProvider,
         timber: Timber,
-        twitchCredentialsProviderInterface: TwitchCredentialsProviderInterface,
+        twitchApiService: TwitchApiService,
         twitchTokensRepository: TwitchTokensRepository,
+        maxRetryCount: int = 3,
         twitchHandle: str = 'CynanBot'
     ):
-        if not isinstance(networkClientProvider, NetworkClientProvider):
-            raise ValueError(f'networkClientProvider argument is malformed: \"{networkClientProvider}\"')
-        elif not isinstance(timber, Timber):
+        if not isinstance(timber, Timber):
             raise ValueError(f'timber argument is malformed: \"{timber}\"')
-        elif not isinstance(twitchCredentialsProviderInterface, TwitchCredentialsProviderInterface):
-            raise ValueError(f'twitchCredentialsProviderInterface argument is malformed: \"{twitchCredentialsProviderInterface}\"')
+        elif not isinstance(twitchApiService, TwitchApiService):
+            raise ValueError(f'twitchApiService argument is malformed: \"{twitchApiService}\"')
         elif not isinstance(twitchTokensRepository, TwitchTokensRepository):
             raise ValueError(f'twitchTokensRepository argument is malformed: \"{twitchTokensRepository}\"')
+        elif not utils.isValidInt(maxRetryCount):
+            raise ValueError(f'retryCount argument is malformed: \"{maxRetryCount}\"')
+        elif maxRetryCount < 3 or maxRetryCount > 5:
+            raise ValueError(f'maxRetryCount argument is out of bounds: {maxRetryCount}')
         elif not utils.isValidStr(twitchHandle):
             raise ValueError(f'twitchHandle argument is malformed: \"{twitchHandle}\"')
 
-        self.__networkClientProvider: NetworkClientProvider = networkClientProvider
         self.__timber: Timber = timber
-        self.__twitchCredentialsProviderInterface: TwitchCredentialsProviderInterface = twitchCredentialsProviderInterface
+        self.__twitchApiService: TwitchApiService = twitchApiService
         self.__twitchTokensRepository: TwitchTokensRepository = twitchTokensRepository
+        self.__maxRetryCount: int = maxRetryCount
         self.__twitchHandle: str = twitchHandle
 
-    async def fetchWhoIsLive(self, users: List[User]) -> Optional[Dict[User, TwitchLiveData]]:
-        return await self.__fetchWhoIsLive(users = users, isRetry = False)
-
-    async def __fetchWhoIsLive(self, users: List[User], isRetry: bool) -> Optional[Dict[User, TwitchLiveData]]:
-        if not utils.isValidBool(isRetry):
-            raise ValueError(f'isRetry argument is malformed: \"{isRetry}\"')
-
+    async def fetchWhoIsLive(
+        self,
+        users: List[User]
+    ) -> Optional[Dict[User, TwitchLiveUserDetails]]:
         if not utils.hasItems(users):
             return None
         elif len(users) > 100:
@@ -154,85 +51,54 @@ class TwitchLiveHelper():
 
         self.__timber.log('TwitchLiveHelper', f'Checking Twitch live status for {len(users)} user(s)...')
 
-        userNamesList: List[str] = list()
+        userNames: List[str] = list()
         for user in users:
-            userNamesList.append(user.getTwitchName())
-        userNamesStr: str = '&user_login='.join(userNamesList)
+            userNames.append(user.getTwitchName())
 
-        clientSession = await self.__networkClientProvider.get()
-        twitchAccessToken = await self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)
-        twitchClientId = await self.__twitchCredentialsProviderInterface.getTwitchClientId()
+        retryCount = 0
+        liveUserDetails: Optional[List[TwitchLiveUserDetails]] = None
 
-        response = None
-        try:
-            response = await clientSession.get(
-                url = f'https://api.twitch.tv/helix/streams?type=live&first=100&user_login={userNamesStr}',
-                headers = {
-                    'Authorization': f'Bearer {twitchAccessToken}',
-                    'Client-Id': twitchClientId
-                }
-            )
-        except GenericNetworkException as e:
-            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
-            raise RuntimeError(f'Exception occurred when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}')
+        while liveUserDetails is None and retryCount < self.__maxRetryCount:
+            retryCount = retryCount + 1
+            twitchAccessToken = await self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)
 
-        jsonResponse: Optional[Dict[str, Any]] = None
-        try:
-            jsonResponse = await response.json()
-        except JSONDecodeError as e:
-            self.__timber.log('TwitchLiveHelper', f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}', e)
-            raise RuntimeError(f'Exception occurred when attempting to decode Twitch\'s response into JSON: {e}')
-
-        if response is None or response.getStatusCode() != 200 or jsonResponse is None or ('error' in jsonResponse and len(jsonResponse['error']) >= 1) or 'data' not in jsonResponse:
-            self.__timber.log('TwitchLiveHelper', f'Error when checking Twitch live status for {len(users)} user(s)! {response} {jsonResponse}')
-
-            if isRetry:
-                raise RuntimeError(f'We\'re already in the middle of a retry, this could be an infinite loop!')
-            elif 'status' in jsonResponse and utils.getIntFromDict(jsonResponse, 'status') == 401:
+            try:
+                liveUserDetails = await self.__twitchApiService.fetchLiveUserDetails(
+                    twitchAccessToken = twitchAccessToken,
+                    userNames = userNames
+                )
+            except GenericNetworkException as e:
+                self.__timber.log('TwitchLiveHelper', f'General network exception occurred (retryCount={retryCount}) when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
+            except TwitchTokenIsExpiredException as e:
+                self.__timber.log('TwitchLiveHelper', f'Twitch token exception occurred (retryCount={retryCount}) when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
                 await self.__twitchTokensRepository.validateAndRefreshAccessToken(
                     twitchHandle = self.__twitchHandle
                 )
 
-                return await self.__fetchWhoIsLive(users = users, isRetry = True)
-            else:
-                raise RuntimeError(f'Unknown error returned by Twitch API: {jsonResponse}')
-
-        dataArray: Optional[List[Dict[str, Any]]] = jsonResponse.get('data')
-        if not utils.hasItems(dataArray):
+        if liveUserDetails is None:
+            self.__timber.log('TwitchLiveHelper', f'Unable to fetch who is live Twitch stream(s) for {len(users)} user(s) after {retryCount} attempt(s)')
             return None
 
-        whoIsLive: Dict[User, TwitchLiveData] = dict()
+        whoIsLive: Dict[User, TwitchLiveUserDetails] = dict()
         whoIsLiveUserLogins: List[str] = list()
 
-        for dataJson in dataArray:
-            twitchLiveData = TwitchLiveData(
-                streamId = utils.getStrFromDict(dataJson, 'id'),
-                userId = utils.getStrFromDict(dataJson, 'user_id'),
-                userLogin = utils.getStrFromDict(dataJson, 'user_login'),
-                userName = utils.getStrFromDict(dataJson, 'user_name'),
-                viewerCount = dataJson.get('viewer_count'),
-                gameId = dataJson.get('game_id'),
-                gameName = dataJson.get('game_name'),
-                language = dataJson.get('language'),
-                streamType = dataJson.get('type'),
-                thumbnailUrl = dataJson.get('thumbnail_url'),
-                title = dataJson.get('title')
-            )
+        for liveUser in liveUserDetails:
+            if liveUser.getStreamType() is not TwitchStreamType.LIVE:
+                continue
 
-            if twitchLiveData.isStreamTypeLive():
-                userLogin = twitchLiveData.getUserLogin().lower()
-                userName = twitchLiveData.getUserName().lower()
-                whoIsLiveUserLogins.append(twitchLiveData.getUserLogin())
+            userLogin = liveUser.getUserLogin().lower()
+            userName = liveUser.getUserName().lower()
+            whoIsLiveUserLogins.append(liveUser.getUserLogin())
 
-                for user in users:
-                    twitchName = user.getTwitchName().lower()
+            for user in users:
+                twitchName = user.getTwitchName().lower()
 
-                    # We check both userLogin and userName because some multi-language users
-                    # could have very different names between userLogin and userName. For example,
-                    # a Korean user may have a userName written using actual Korean characters,
-                    # and then a userLogin written in English characters.
-                    if userLogin == twitchName or userName == twitchName:
-                        whoIsLive[user] = twitchLiveData
+                # We check both userLogin and userName because some multi-language users
+                # could have very different names between userLogin and userName. For example,
+                # a Korean user may have a userName written using actual Korean characters,
+                # and then a userLogin written in English characters.
+                if userLogin == twitchName or userName == twitchName:
+                    whoIsLive[user] = liveUserDetails
 
         whoIsLiveUserLoginsString = ', '.join(whoIsLiveUserLogins)
         self.__timber.log('TwitchLiveHelper', f'{len(whoIsLive)} user(s) live on Twitch: {whoIsLiveUserLoginsString}')
