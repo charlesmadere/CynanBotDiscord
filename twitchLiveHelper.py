@@ -103,7 +103,4 @@ class TwitchLiveHelper():
         whoIsLiveUserLoginsString = ', '.join(whoIsLiveUserLogins)
         self.__timber.log('TwitchLiveHelper', f'{len(whoIsLive)} user(s) live on Twitch: {whoIsLiveUserLoginsString}')
 
-        if len(whoIsLive) != len(whoIsLiveUserLogins):
-            self.__timber.log('TwitchLiveHelper', f'Encountered a data error of some kind, outputting some debug information: {jsonResponse}')
-
         return whoIsLive

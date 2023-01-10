@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 import CynanBotCommon.utils as utils
 from CynanBotCommon.storage.backingDatabase import BackingDatabase
 from CynanBotCommon.storage.databaseConnection import DatabaseConnection
+from CynanBotCommon.storage.databaseType import DatabaseType
 from user import User
 from usersRepository import UsersRepository
 
@@ -40,9 +41,9 @@ class TwitchAnnounceChannelsRepository():
         backingDatabase: BackingDatabase,
         usersRepository: UsersRepository
     ):
-        if backingDatabase is None:
+        if not isinstance(backingDatabase, BackingDatabase):
             raise ValueError(f'backingDatabase argument is malformed: \"{backingDatabase}\"')
-        elif usersRepository is None:
+        elif not isinstance(usersRepository, UsersRepository):
             raise ValueError(f'usersRepository argument is malformed: \"{usersRepository}\"')
 
         self.__backingDatabase: BackingDatabase = backingDatabase
@@ -64,9 +65,9 @@ class TwitchAnnounceChannelsRepository():
         connection = await self.__getDatabaseConnection()
         await connection.execute(
             f'''
-                INSERT INTO twitchAnnounceChannel_{discordChannelId} (discordUserId)
+                INSERT INTO twitchannouncechannel_{discordChannelId} (discorduserid)
                 VALUES ($1)
-                ON CONFLICT (discordUserId) DO NOTHING
+                ON CONFLICT (discorduserid) DO NOTHING
             ''',
             user.getDiscordId()
         )
@@ -82,20 +83,31 @@ class TwitchAnnounceChannelsRepository():
         connection = await self.__getDatabaseConnection()
         await connection.execute(
             '''
-                INSERT INTO twitchAnnounceChannels (discordChannelId)
+                INSERT INTO twitchannouncechannels (discordchannelid)
                 VALUES ($1)
-                ON CONFLICT (discordChannelId) DO NOTHING
+                ON CONFLICT (discordchannelid) DO NOTHING
             ''',
             str(discordChannelId)
         )
 
-        await connection.execute(
-            f'''
-                CREATE TABLE IF NOT EXISTS twitchAnnounceChannel_{discordChannelId} (
-                    discordUserId TEXT NOT NULL UNIQUE COLLATE NOCASE
-                )
-            '''
-        )
+        if connection.getDatabaseType() is DatabaseType.POSTGRESQL:
+            await connection.createTableIfNotExists(
+                f'''
+                    CREATE TABLE IF NOT EXISTS twitchannouncechannel_{discordChannelId} (
+                        discorduserid public.citext NOT NULL PRIMARY KEY
+                    )
+                '''
+            )
+        elif connection.getDatabaseType() is DatabaseType.SQLITE:
+            await connection.createTableIfNotExists(
+                f'''
+                    CREATE TABLE IF NOT EXISTS twitchannouncechannel_{discordChannelId} (
+                        discorduserid TEXT NOT NULL PRIMARY KEY COLLATE NOCASE
+                    )
+                '''
+            )
+        else:
+            raise RuntimeError(f'unknown DatabaseType: \"{connection.getDatabaseType()}\"')
 
         await connection.close()
 
@@ -109,7 +121,7 @@ class TwitchAnnounceChannelsRepository():
         rows: Optional[List[List[Any]]] = None
 
         try:
-            rows = await connection.fetchRows(f'SELECT discordUserId FROM twitchAnnounceChannel_{discordChannelId}')
+            rows = await connection.fetchRows(f'SELECT discorduserid FROM twitchannouncechannel_{discordChannelId}')
         except OperationalError:
             # this error can be safely ignored, it just means the above table doesn't exist
             pass
@@ -138,7 +150,7 @@ class TwitchAnnounceChannelsRepository():
 
     async def fetchTwitchAnnounceChannels(self) -> Optional[List[TwitchAnnounceChannel]]:
         connection = await self.__getDatabaseConnection()
-        rows = await connection.fetchRows('SELECT discordChannelId FROM twitchAnnounceChannels')
+        rows = await connection.fetchRows('SELECT discordchannelid FROM twitchannouncechannels')
 
         if not utils.hasItems(rows):
             await connection.close()
@@ -164,13 +176,25 @@ class TwitchAnnounceChannelsRepository():
         self.__isDatabaseReady = True
 
         connection = await self.__backingDatabase.getConnection()
-        await connection.execute(
-            '''
-                CREATE TABLE IF NOT EXISTS twitchAnnounceChannels (
-                    discordChannelId TEXT NOT NULL UNIQUE COLLATE NOCASE
-                )
-            '''
-        )
+
+        if connection.getDatabaseType() is DatabaseType.POSTGRESQL:
+            await connection.createTableIfNotExists(
+                '''
+                    CREATE TABLE IF NOT EXISTS twitchannouncechannels (
+                        discordchannelid public.citext NOT NULL PRIMARY KEY
+                    )
+                '''
+            )
+        elif connection.getDatabaseType() is DatabaseType.SQLITE:
+            await connection.createTableIfNotExists(
+                '''
+                    CREATE TABLE IF NOT EXISTS twitchannouncechannels (
+                        discordchannelid TEXT NOT NULL PRIMARY KEY COLLATE NOCASE
+                    )
+                '''
+            )
+        else:
+            raise RuntimeError(f'unknown DatabaseType: \"{connection.getDatabaseType()}\"')
 
         await connection.close()
 
@@ -187,8 +211,8 @@ class TwitchAnnounceChannelsRepository():
         try:
             connection.execute(
                 f'''
-                    DELETE FROM twitchAnnounceChannel_{discordChannelId}
-                    WHERE discordUserId = $1
+                    DELETE FROM twitchannouncechannel_{discordChannelId}
+                    WHERE discorduserid = $1
                 ''',
                 user.getDiscordId()
             )

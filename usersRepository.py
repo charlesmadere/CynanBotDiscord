@@ -5,6 +5,7 @@ import CynanBotCommon.utils as utils
 from CynanBotCommon.simpleDateTime import SimpleDateTime
 from CynanBotCommon.storage.backingDatabase import BackingDatabase
 from CynanBotCommon.storage.databaseConnection import DatabaseConnection
+from CynanBotCommon.storage.databaseType import DatabaseType
 from CynanBotCommon.users.usersRepositoryInterface import \
     UsersRepositoryInterface
 from user import User
@@ -13,7 +14,7 @@ from user import User
 class UsersRepository(UsersRepositoryInterface):
 
     def __init__(self, backingDatabase: BackingDatabase):
-        if backingDatabase is None:
+        if not isinstance(backingDatabase, BackingDatabase):
             raise ValueError(f'backingDatabase argument is malformed: \"{backingDatabase}\"')
 
         self.__backingDatabase: BackingDatabase = backingDatabase
@@ -29,36 +30,36 @@ class UsersRepository(UsersRepositoryInterface):
         if user.hasMostRecentStreamDateTime() and user.hasTwitchName():
             await connection.execute(
                 '''
-                    INSERT INTO users (discordDiscriminator, discordId, discordName, mostRecentStreamDateTime, twitchName)
+                    INSERT INTO users (discorddiscriminator, discordid, discordname, mostrecentstreamdatetime, twitchname)
                     VALUES ($1, $2, $3, $4, $5)
-                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = EXCLUDED.discordDiscriminator, discordName = EXCLUDED.discordName, mostRecentStreamDateTime = EXCLUDED.mostRecentStreamDateTime, twitchName = EXCLUDED.twitchName
+                    ON CONFLICT(discordid) DO UPDATE SET discorddiscriminator = EXCLUDED.discorddiscriminator, discordname = EXCLUDED.discordname, mostrecentstreamdatetime = EXCLUDED.mostrecentstreamdatetime, twitchname = EXCLUDED.twitchname
                 ''',
                 user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTime().getIsoFormatStr(), user.getTwitchName()
             )
         elif user.hasMostRecentStreamDateTime():
             await connection.execute(
                 '''
-                    INSERT INTO users (discordDiscriminator, discordId, discordName, mostRecentStreamDateTime)
+                    INSERT INTO users (discorddiscriminator, discordid, discordname, mostrecentstreamdatetime)
                     VALUES ($1, $2, $3, $4)
-                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = EXCLUDED.discordDiscriminator, discordName = EXCLUDED.discordName, mostRecentStreamDateTime = EXCLUDED.mostRecentStreamDateTime
+                    ON CONFLICT(discordid) DO UPDATE SET discorddiscriminator = EXCLUDED.discorddiscriminator, discordname = EXCLUDED.discordname, mostrecentstreamdatetime = EXCLUDED.mostrecentstreamdatetime
                 ''',
                 user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getMostRecentStreamDateTime().getIsoFormatStr()
             )
         elif user.hasTwitchName():
             await connection.execute(
                 '''
-                    INSERT INTO users (discordDiscriminator, discordId, discordName, twitchName)
+                    INSERT INTO users (discorddiscriminator, discordid, discordname, twitchname)
                     VALUES ($1, $2, $3, $4)
-                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = EXCLUDED.discordDiscriminator, discordName = EXCLUDED.discordName, twitchName = EXCLUDED.twitchName
+                    ON CONFLICT(discordid) DO UPDATE SET discorddiscriminator = EXCLUDED.discorddiscriminator, discordname = EXCLUDED.discordname, twitchname = EXCLUDED.twitchname
                 ''',
                 user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName(), user.getTwitchName()
             )
         else:
             await connection.execute(
                 '''
-                    INSERT INTO users (discordDiscriminator, discordId, discordName)
+                    INSERT INTO users (discorddiscriminator, discordid, discordname)
                     VALUES ($1, $2, $3)
-                    ON CONFLICT(discordId) DO UPDATE SET discordDiscriminator = EXCLUDED.discordDiscriminator, discordName = EXCLUDED.discordName
+                    ON CONFLICT(discordid) DO UPDATE SET discorddiscriminator = EXCLUDED.discorddiscriminator, discordname = EXCLUDED.discordname
                 ''',
                 user.getDiscordDiscriminator(), user.getDiscordId(), user.getDiscordName()
             )
@@ -79,8 +80,9 @@ class UsersRepository(UsersRepositoryInterface):
         connection = await self.__getDatabaseConnection()
         row = await connection.fetchRow(
             '''
-                SELECT discordDiscriminator, discordId, discordName, mostRecentStreamDateTime, twitchName FROM users 
-                WHERE discordId = $1
+                SELECT discorddiscriminator, discordid, discordname, mostrecentstreamdatetime, twitchname FROM users
+                WHERE discordid = $1
+                LIMIT 1
             ''',
             discordId
         )
@@ -120,16 +122,32 @@ class UsersRepository(UsersRepositoryInterface):
         self.__isDatabaseReady = True
 
         connection = await self.__backingDatabase.getConnection()
-        await connection.execute(
-            '''
-                CREATE TABLE IF NOT EXISTS users (
-                    discordDiscriminator TEXT NOT NULL COLLATE NOCASE,
-                    discordId TEXT NOT NULL UNIQUE PRIMARY KEY COLLATE NOCASE,
-                    discordName TEXT NOT NULL COLLATE NOCASE,
-                    mostRecentStreamDateTime TEXT DEFAULT NULL COLLATE NOCASE,
-                    twitchName TEXT DEFAULT NULL COLLATE NOCASE
-                )
-            '''
-        )
+
+        if connection.getDatabaseType() is DatabaseType.POSTGRESQL:
+            await connection.createTableIfNotExists(
+                '''
+                    CREATE TABLE IF NOT EXISTS users (
+                        discorddiscriminator public.citext NOT NULL,
+                        discordid public.citext NOT NULL PRIMARY KEY,
+                        discordname public.citext NOT NULL,
+                        mostrecentstreamdatetime text DEFAULT NULL,
+                        twitchname public.citext DEFAULT NULLE
+                    )
+                '''
+            )
+        elif connection.getDatabaseType() is DatabaseType.SQLITE:
+            await connection.createTableIfNotExists(
+                '''
+                    CREATE TABLE IF NOT EXISTS users (
+                        discorddiscriminator TEXT NOT NULL COLLATE NOCASE,
+                        discordid TEXT NOT NULL PRIMARY KEY COLLATE NOCASE,
+                        discordname TEXT NOT NULL COLLATE NOCASE,
+                        mostrecentstreamdatetime TEXT DEFAULT NULL COLLATE NOCASE,
+                        twitchname TEXT DEFAULT NULL COLLATE NOCASE
+                    )
+                '''
+            )
+        else:
+            raise RuntimeError(f'unknown DatabaseType: \"{connection.getDatabaseType()}\"')
 
         await connection.close()
