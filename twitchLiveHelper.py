@@ -5,6 +5,8 @@ from CynanBotCommon.network.exceptions import GenericNetworkException
 from CynanBotCommon.timber.timber import Timber
 from CynanBotCommon.twitch.exceptions import TwitchTokenIsExpiredException
 from CynanBotCommon.twitch.twitchApiService import TwitchApiService
+from CynanBotCommon.twitch.twitchHandleProviderInterface import \
+    TwitchHandleProviderInterface
 from CynanBotCommon.twitch.twitchLiveUserDetails import TwitchLiveUserDetails
 from CynanBotCommon.twitch.twitchStreamType import TwitchStreamType
 from CynanBotCommon.twitch.twitchTokensRepository import TwitchTokensRepository
@@ -17,28 +19,28 @@ class TwitchLiveHelper():
         self,
         timber: Timber,
         twitchApiService: TwitchApiService,
+        twitchHandleProviderInterface: TwitchHandleProviderInterface,
         twitchTokensRepository: TwitchTokensRepository,
-        maxRetryCount: int = 3,
-        twitchHandle: str = 'CynanBot'
+        maxRetryCount: int = 3
     ):
         if not isinstance(timber, Timber):
             raise ValueError(f'timber argument is malformed: \"{timber}\"')
         elif not isinstance(twitchApiService, TwitchApiService):
             raise ValueError(f'twitchApiService argument is malformed: \"{twitchApiService}\"')
+        elif not isinstance(twitchHandleProviderInterface, TwitchHandleProviderInterface):
+            raise ValueError(f'botHandleProviderInterface argument is malformed: \"{twitchHandleProviderInterface}\"')
         elif not isinstance(twitchTokensRepository, TwitchTokensRepository):
             raise ValueError(f'twitchTokensRepository argument is malformed: \"{twitchTokensRepository}\"')
         elif not utils.isValidInt(maxRetryCount):
             raise ValueError(f'retryCount argument is malformed: \"{maxRetryCount}\"')
         elif maxRetryCount < 3 or maxRetryCount > 6:
             raise ValueError(f'maxRetryCount argument is out of bounds: {maxRetryCount}')
-        elif not utils.isValidStr(twitchHandle):
-            raise ValueError(f'twitchHandle argument is malformed: \"{twitchHandle}\"')
 
         self.__timber: Timber = timber
         self.__twitchApiService: TwitchApiService = twitchApiService
+        self.__twitchHandleProviderInterface: TwitchHandleProviderInterface = twitchHandleProviderInterface
         self.__twitchTokensRepository: TwitchTokensRepository = twitchTokensRepository
         self.__maxRetryCount: int = maxRetryCount
-        self.__twitchHandle: str = twitchHandle
 
     async def fetchWhoIsLive(
         self,
@@ -57,10 +59,14 @@ class TwitchLiveHelper():
 
         retryCount = 0
         liveUserDetails: Optional[List[TwitchLiveUserDetails]] = None
+        twitchHandle = await self.__twitchHandleProviderInterface.getTwitchHandle()
 
         while liveUserDetails is None and retryCount < self.__maxRetryCount:
             retryCount = retryCount + 1
-            twitchAccessToken = await self.__twitchTokensRepository.requireAccessToken(self.__twitchHandle)
+
+            twitchAccessToken = await self.__twitchTokensRepository.requireAccessToken(
+                twitchHandle = twitchHandle
+            )
 
             try:
                 liveUserDetails = await self.__twitchApiService.fetchLiveUserDetails(
@@ -71,8 +77,9 @@ class TwitchLiveHelper():
                 self.__timber.log('TwitchLiveHelper', f'General network exception occurred (retryCount={retryCount}) when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
             except TwitchTokenIsExpiredException as e:
                 self.__timber.log('TwitchLiveHelper', f'Twitch token exception occurred (retryCount={retryCount}) when attempting to fetch live Twitch stream(s) for {len(users)} user(s): {e}', e)
+
                 await self.__twitchTokensRepository.validateAndRefreshAccessToken(
-                    twitchHandle = self.__twitchHandle
+                    twitchHandle = twitchHandle
                 )
 
         if liveUserDetails is None:

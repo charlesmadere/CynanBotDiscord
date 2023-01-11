@@ -5,7 +5,7 @@ from CynanBotCommon.network.networkClientType import NetworkClientType
 from CynanBotCommon.storage.databaseType import DatabaseType
 
 
-class GeneralSettingsSnapshot():
+class GeneralSettingsRepositorySnapshot():
 
     def __init__(
         self,

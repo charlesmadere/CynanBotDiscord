@@ -3,7 +3,7 @@ from typing import Any, Dict
 import CynanBotCommon.utils as utils
 
 
-class AuthSnapshot():
+class AuthRepositorySnapshot():
 
     def __init__(
         self,
@@ -41,3 +41,11 @@ class AuthSnapshot():
             raise ValueError(f'\"twitchClientSecret\" in auth file \"{self.__authFile}\" is malformed: \"{twitchClientSecret}\"')
 
         return twitchClientSecret
+
+    def requireTwitchHandle(self) -> str:
+        twitchHandle = self.__jsonContents.get('twitchHandle')
+
+        if not utils.isValidStr(twitchHandle):
+            raise ValueError(f'\"twitchHandle\" in Auth Repository file (\"{self.__authRepositoryFile}\") is malformed: \"{twitchHandle}\"')
+
+        return twitchHandle

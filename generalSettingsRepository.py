@@ -6,7 +6,7 @@ import aiofiles
 import aiofiles.ospath
 
 import CynanBotCommon.utils as utils
-from generalSettingsSnapshot import GeneralSettingsSnapshot
+from generalSettingsRepositorySnapshot import GeneralSettingsRepositorySnapshot
 
 
 class GeneralSettingsRepository():
@@ -19,27 +19,27 @@ class GeneralSettingsRepository():
             raise ValueError(f'generalSettingsFile argument is malformed: \"{generalSettingsFile}\"')
 
         self.__generalSettingsFile: str = generalSettingsFile
-        self.__cache: Optional[GeneralSettingsSnapshot] = None
+        self.__cache: Optional[GeneralSettingsRepositorySnapshot] = None
 
     async def clearCaches(self):
         self.__cache = None
 
-    def getAll(self) -> GeneralSettingsSnapshot:
+    def getAll(self) -> GeneralSettingsRepositorySnapshot:
         if self.__cache is not None:
             return self.__cache
 
         jsonContents = self.__readJson()
-        snapshot = GeneralSettingsSnapshot(jsonContents, self.__generalSettingsFile)
+        snapshot = GeneralSettingsRepositorySnapshot(jsonContents, self.__generalSettingsFile)
         self.__cache = snapshot
 
         return snapshot
 
-    async def getAllAsync(self) -> GeneralSettingsSnapshot:
+    async def getAllAsync(self) -> GeneralSettingsRepositorySnapshot:
         if self.__cache is not None:
             return self.__cache
 
         jsonContents = await self.__readJsonAsync()
-        snapshot = GeneralSettingsSnapshot(jsonContents, self.__generalSettingsFile)
+        snapshot = GeneralSettingsRepositorySnapshot(jsonContents, self.__generalSettingsFile)
         self.__cache = snapshot
 
         return snapshot

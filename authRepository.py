@@ -6,12 +6,14 @@ import aiofiles
 import aiofiles.ospath
 
 import CynanBotCommon.utils as utils
-from authSnapshot import AuthSnapshot
+from authRepositorySnapshot import AuthRepositorySnapshot
 from CynanBotCommon.twitch.twitchCredentialsProviderInterface import \
     TwitchCredentialsProviderInterface
+from CynanBotCommon.twitch.twitchHandleProviderInterface import \
+    TwitchHandleProviderInterface
 
 
-class AuthRepository(TwitchCredentialsProviderInterface):
+class AuthRepository(TwitchCredentialsProviderInterface, TwitchHandleProviderInterface):
 
     def __init__(
         self,
@@ -21,27 +23,27 @@ class AuthRepository(TwitchCredentialsProviderInterface):
             raise ValueError(f'argument is malformed: \"{authFile}\"')
 
         self.__authFile: str = authFile
-        self.__cache: Optional[AuthSnapshot] = None
+        self.__cache: Optional[AuthRepositorySnapshot] = None
 
     async def clearCaches(self):
         self.__cache = None
 
-    def getAll(self) -> AuthSnapshot:
+    def getAll(self) -> AuthRepositorySnapshot:
         if self.__cache is not None:
             return self.__cache
 
         jsonContents = self.__readJson()
-        snapshot = AuthSnapshot(jsonContents, self.__authFile)
+        snapshot = AuthRepositorySnapshot(jsonContents, self.__authFile)
         self.__cache = snapshot
 
         return snapshot
 
-    async def getAllAsync(self) -> AuthSnapshot:
+    async def getAllAsync(self) -> AuthRepositorySnapshot:
         if self.__cache is not None:
             return self.__cache
 
         jsonContents = await self.__readJsonAsync()
-        snapshot = AuthSnapshot(jsonContents, self.__authFile)
+        snapshot = AuthRepositorySnapshot(jsonContents, self.__authFile)
         self.__cache = snapshot
 
         return snapshot
@@ -53,6 +55,10 @@ class AuthRepository(TwitchCredentialsProviderInterface):
     async def getTwitchClientSecret(self) -> str:
         snapshot = await self.getAllAsync()
         return snapshot.requireTwitchClientSecret()
+
+    async def getTwitchHandle(self) -> str:
+        snapshot = await self.getAllAsync()
+        return snapshot.requireTwitchHandle()
 
     def __readJson(self) -> Dict[str, Any]:
         if not os.path.exists(self.__authFile):

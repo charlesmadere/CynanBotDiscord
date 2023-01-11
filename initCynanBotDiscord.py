@@ -69,6 +69,10 @@ twitchApiService = TwitchApiService(
     timber = timber,
     twitchCredentialsProviderInterface = authRepository
 )
+twitchTokensRepository = TwitchTokensRepository(
+    timber = timber,
+    twitchApiService = twitchApiService
+)
 
 cynanBotDiscord = CynanBotDiscord(
     eventLoop = eventLoop,
@@ -83,10 +87,8 @@ cynanBotDiscord = CynanBotDiscord(
         twitchLiveHelper = TwitchLiveHelper(
             timber = timber,
             twitchApiService = twitchApiService,
-            twitchTokensRepository = TwitchTokensRepository(
-                timber = timber,
-                twitchApiService = twitchApiService
-            )
+            twitchHandleProviderInterface = authRepository,
+            twitchTokensRepository = twitchTokensRepository
         ),
         usersRepository = usersRepository
     )
