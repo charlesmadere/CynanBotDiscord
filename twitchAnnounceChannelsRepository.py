@@ -14,7 +14,7 @@ class TwitchAnnounceChannel():
     def __init__(
         self,
         discordChannelId: int,
-        users: List[User] = None
+        users: Optional[List[User]] = None
     ):
         if not utils.isValidInt(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
@@ -52,7 +52,7 @@ class TwitchAnnounceChannelsRepository():
         self.__isDatabaseReady: bool = False
 
     async def addUser(self, user: User, discordChannelId: int):
-        if user is None:
+        if not isinstance(user, User):
             raise ValueError(f'user argument is malformed: \"{user}\"')
         elif not utils.isValidInt(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
@@ -199,7 +199,7 @@ class TwitchAnnounceChannelsRepository():
         await connection.close()
 
     async def removeUser(self, user: User, discordChannelId: int):
-        if user is None:
+        if not isinstance(user, User):
             raise ValueError(f'user argument is malformed: \"{user}\"')
         elif not utils.isValidInt(discordChannelId):
             raise ValueError(f'discordChannelId argument is malformed: \"{discordChannelId}\"')
