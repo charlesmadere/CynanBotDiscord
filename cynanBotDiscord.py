@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 import urllib
 from asyncio import AbstractEventLoop
 from datetime import datetime, timedelta, timezone
@@ -128,7 +129,7 @@ class CynanBotDiscord(commands.Bot):
             try:
                 await self.__checkTwitchStreams()
             except Exception as e:
-                self.__timber.log('CynanBotDiscord', f'Encountered Exception when checking Twitch streams: {e}', e)
+                self.__timber.log('CynanBotDiscord', f'Encountered Exception when checking Twitch streams: {e}\n{traceback.format_exc()}', e)
 
             generalSettings = await self.__generalSettingsRepository.getAllAsync()
             await asyncio.sleep(generalSettings.getRefreshEverySeconds())
