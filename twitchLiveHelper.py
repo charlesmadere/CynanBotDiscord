@@ -29,7 +29,7 @@ class TwitchLiveHelper():
             raise ValueError(f'twitchTokensRepository argument is malformed: \"{twitchTokensRepository}\"')
         elif not utils.isValidInt(maxRetryCount):
             raise ValueError(f'retryCount argument is malformed: \"{maxRetryCount}\"')
-        elif maxRetryCount < 3 or maxRetryCount > 5:
+        elif maxRetryCount < 3 or maxRetryCount > 6:
             raise ValueError(f'maxRetryCount argument is out of bounds: {maxRetryCount}')
         elif not utils.isValidStr(twitchHandle):
             raise ValueError(f'twitchHandle argument is malformed: \"{twitchHandle}\"')
@@ -42,7 +42,7 @@ class TwitchLiveHelper():
 
     async def fetchWhoIsLive(
         self,
-        users: List[User]
+        users: Optional[List[User]]
     ) -> Optional[Dict[User, TwitchLiveUserDetails]]:
         if not utils.hasItems(users):
             return None
