@@ -49,13 +49,13 @@ class TwitchLiveUsersRepository():
         twitchLiveHelper: TwitchLiveHelper,
         usersRepository: UsersRepository
     ):
-        if twitchAnnounceChannelsRepository is None:
+        if not isinstance(twitchAnnounceChannelsRepository, TwitchAnnounceChannelsRepository):
             raise ValueError(f'twitchAnnounceChannelsRepository argument is malformed: \"{twitchAnnounceChannelsRepository}\"')
-        elif twitchAnnounceSettingsRepository is None:
+        elif not isinstance(twitchAnnounceSettingsRepository, TwitchAnnounceSettingsRepository):
             raise ValueError(f'twitchAnnounceSettingsRepository argument is malformed: \"{twitchAnnounceSettingsRepository}\"')
-        elif twitchLiveHelper is None:
+        elif not isinstance(twitchLiveHelper, TwitchLiveHelper):
             raise ValueError(f'twitchLiveHelper argument is malformed: \"{twitchLiveHelper}\"')
-        elif usersRepository is None:
+        elif not isinstance(usersRepository, UsersRepository):
             raise ValueError(f'usersRepository argument is malformed: \"{usersRepository}\"')
 
         self.__twitchAnnounceChannelsRepository: TwitchAnnounceChannelsRepository = twitchAnnounceChannelsRepository

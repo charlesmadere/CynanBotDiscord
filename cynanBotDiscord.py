@@ -38,19 +38,19 @@ class CynanBotDiscord(commands.Bot):
             status = discord.Status.online
         )
 
-        if eventLoop is None:
+        if not isinstance(eventLoop, AbstractEventLoop):
             raise ValueError(f'eventLoop argument is malformed: \"{eventLoop}\"')
-        elif authRepository is None:
+        elif not isinstance(authRepository, AuthRepository):
             raise ValueError(f'authRepository argument is malformed: \"{authRepository}\"')
-        elif generalSettingsRepository is None:
+        elif not isinstance(generalSettingsRepository, GeneralSettingsRepository):
             raise ValueError(f'generalSettingsRepository argument is malformed: \"{generalSettingsRepository}\"')
-        elif timber is None:
+        elif not isinstance(timber, Timber):
             raise ValueError(f'timber argument is malformed: \"{timber}\"')
-        elif twitchAnnounceChannelsRepository is None:
+        elif not isinstance(twitchAnnounceChannelsRepository, TwitchAnnounceChannelsRepository):
             raise ValueError(f'twitchAnnounceChannelsRepository argument is malformed: \"{twitchAnnounceChannelsRepository}\"')
-        elif twitchAnnounceSettingsRepository is None:
+        elif not isinstance(twitchAnnounceSettingsRepository, TwitchAnnounceSettingsRepository):
             raise ValueError(f'twitchAnnounceSettingsRepository argument is malformed: \"{twitchAnnounceSettingsRepository}\"')
-        elif twitchLiveUsersRepository is None:
+        elif not isinstance(twitchLiveUsersRepository, TwitchLiveUsersRepository):
             raise ValueError(f'twitchLiveUsersRepository argument is malformed: \"{twitchLiveUsersRepository}\"')
 
         self.__eventLoop: AbstractEventLoop = eventLoop
